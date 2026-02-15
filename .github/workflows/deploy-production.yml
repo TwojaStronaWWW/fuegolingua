@@ -1,0 +1,51 @@
+name: Deploy PRODUCTION
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Deploy via SFTP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }}
+          source: './*'
+          target: '/home/platne/serwer417204/public_html/${{ vars.PRODUCTION_PATH }}/'
+          overwrite: true
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Create production tag
+        run: |
+          VERSION="v$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)"
+          echo "Creating tag $VERSION"
+
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag already exists. Skipping."
+          else
+            git tag "$VERSION"
+            git push origin "$VERSION"
+          fi

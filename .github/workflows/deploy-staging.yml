@@ -1,0 +1,29 @@
+name: Deploy STAGING
+
+on:
+  push:
+    branches:
+      - staging
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy via SFTP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }}
+          source: './*'
+          target: '/home/platne/serwer417204/public_html/${{ vars.STAGING_PATH }}/'
+          overwrite: true

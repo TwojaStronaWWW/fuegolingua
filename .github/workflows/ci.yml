@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - staging
+      - main
+  pull_request:
+    branches:
+      - staging
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 1️⃣ Sprawdź czy istnieje index.html lub index.php
+      - name: Check main entry file exists
+        run: |
+          if [ ! -f index.html ] && [ ! -f index.php ]; then
+            echo "No index.html or index.php found!"
+            exit 1
+          fi
+
+      # 2️⃣ Sprawdź czy nie commitujesz .env
+      - name: Prevent committing .env
+        run: |
+          if git ls-files | grep -E "\.env$"; then
+            echo ".env file detected in repository!"
+            exit 1
+          fi
+
+      # 3️⃣ Walidacja składni PHP
+      - name: Validate PHP syntax
+        run: |
+          if find . -type f -name "*.php" | grep -q .; then
+            echo "Checking PHP syntax..."
+            find . -type f -name "*.php" -print0 | xargs -0 -n1 php -l
+          else
+            echo "No PHP files found, skipping PHP validation."
+          fi
+
+      - name: CI Passed
+        run: echo "All checks passed successfully."
