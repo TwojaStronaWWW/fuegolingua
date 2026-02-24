@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuego Lingua - Hiszpański z Pasją | Nauka Hiszpańskiego Online</title>
+    <meta name="description"
+        content="Ucz się hiszpańskiego tak, jak się go czuje: z energią, rytmem i prawdziwymi emocjami. Fuego Lingua - Twój nauczyciel języka hiszpańskiego. Indywidualne lekcje, konwersacje.">
+    <meta name="keywords"
+        content="hiszpański, nauka hiszpańskiego, hiszpański online, korepetycje, konwersacje, hiszpański z pasją, fuego lingua">
+    <meta name="author" content="Fuego Lingua">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fuegolingua.pl/">
+    <meta property="og:title" content="Fuego Lingua - Hiszpański z Pasją">
+    <meta property="og:description" content="Ucz się hiszpańskiego z energią i rytmem! Zajęcia indywidualne i grupowe.">
+    <meta property="og:image" content="assets/images/logohero.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/images/logofoto.png">
+
+    <!-- Fonts (Non-blocking) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Raleway:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Google Material Symbols Rounded (Solid) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0"
+        rel="stylesheet" />
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Raleway:wght@300;400;600;700&display=swap"
+            rel="stylesheet">
+    </noscript>
+
+    <!-- CSS (Critical - Preloaded) -->
+    <link rel="preload" href="assets/css/style.css?v=3.5" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="assets/css/style.css?v=3.5">
+    </noscript>
+
+    <link rel="preload" href="assets/css/media.css?v=3.5" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="assets/css/media.css?v=3.5">
+    </noscript>
+
+    <style>
+        /* Critical CSS to prevent H1 deprecation warning AND CLS */
+        h1,
+        section h1 {
+            font-size: 2rem;
+        }
+
+        /* CLS Prevention: Hero Image */
+        .hero-logo-img {
+            height: 320px;
+            width: auto;
+        }
+
+        /* CLS Prevention: Hero Title */
+        .hero-title {
+            font-size: 5rem;
+            line-height: 1.1;
+        }
+
+        /* CLS Prevention: Mobile Menu defaults */
+        .hamburger {
+            display: none;
+        }
+
+        /* Mobile Critical Overrides */
+        @media (max-width: 768px) {
+            .hero-logo-img {
+                height: 280px;
+            }
+
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .hamburger {
+                display: block;
+                width: 44px;
+                height: 44px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="main-header">
+        <nav class="navbar">
+            <div class="logo">
+                <a href="#hero">
+                    <img src="assets/images/fuegolingua-logo_raster.png" alt="Fuego Lingua" class="header-logo"
+                        width="150" height="45">
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#hero">Start</a></li>
+                <li><a href="#offer">Oferta</a></li>
+                <li><a href="#about">O Mnie</a></li>
+                <li><a href="#contact" class="btn-cta-nav">Kontakt</a></li>
+            </ul>
+            <div class="hamburger" aria-label="Menu" role="button" tabindex="0">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+                </svg>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="hero-section">
+            <div class="hero-visuals">
+                <!-- Main persona with flag -->
+                <img src="assets/images/kobieta2.png" alt="Fuego Lingua - Pasja i Język" class="hero-main-img"
+                    fetchpriority="high">
+            </div>
+            <div class="hero-content">
+                <h1 class="hero-title">Zacznij mówić po hiszpańsku swobodnie.</h1>
+
+                <div class="hero-text-wrapper">
+                    <p class="hero-subtitle"
+                        style="font-weight: 700; color: var(--fuego-orange); margin-bottom: 0.5rem; display: block;">Już
+                        od pierwszych zajęć.</p>
+                    <p class="hero-subtitle">Ucz się hiszpańskiego tak, jak się go czuje&nbsp;—<br>z&nbsp;energią,
+                        rytmem i&nbsp;prawdziwymi emocjami,<br>a&nbsp;nie z&nbsp;podręcznikowej teorii.</p>
+                </div>
+
+                <p class="hero-text hero-rationale">Indywidualne lekcje online, które skupiają się na mówieniu i
+                    realnych postępach.</p>
+
+                <a href="#contact" class="btn-primary">Umów bezpłatną rozmowę</a>
+            </div>
+        </section>
+
+        <section id="offer" class="section offer-section">
+            <div class="container">
+                <h2 class="section-title">Co oferuję?</h2>
+
+                <div class="orbit-container">
+                    <img src="assets/images/kobieta1b.png" alt="Hiszpański" class="orbit-center">
+
+                    <div class="orbit-ring">
+                        <!-- Orbit Items -->
+                        <div class="orbit-item" style="--i: 0;">
+                            <div class="offer-card">
+                                <div class="offer-content">
+                                    <span class="material-symbols-rounded offer-icon">forum</span>
+                                    <h3>Swoboda mówienia od pierwszych zajęć</h3>
+                                    <p class="offer-desc">Zmiażdż barierę językową. Nawet jeśli zaczynasz od zera, nasza
+                                        pierwsza lekcja to w 80% żywa rozmowa.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="orbit-item" style="--i: 1;">
+                            <div class="offer-card">
+                                <div class="offer-content">
+                                    <span class="material-symbols-rounded offer-icon">group</span>
+                                    <h3>Ucz się w swoim idealnym tempie</h3>
+                                    <p class="offer-desc">Wybierz pełne skupienie trenera na sesjach 1:1 lub dołącz do
+                                        małej
+                                        grupy i motywujcie się nawzajem.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="orbit-item" style="--i: 2;">
+                            <div class="offer-card">
+                                <div class="offer-content">
+                                    <span class="material-symbols-rounded offer-icon">celebration</span>
+                                    <h3>Odkryj duszę prawdziwej Hiszpanii</h3>
+                                    <p class="offer-desc">Żadnych nudnych podręczników. Ucz się na żywych materiałach:
+                                        filmach, hitach muzycznych i serialach.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="orbit-item" style="--i: 3;">
+                            <div class="offer-card">
+                                <div class="offer-content">
+                                    <span class="material-symbols-rounded offer-icon">public</span>
+                                    <h3>Od zera do pewności siebie (A1-C1)</h3>
+                                    <p class="offer-desc">Poprowadzę Cię za rękę przez każdy etap. Zobaczysz mierzalne
+                                        efekty bez względu na obecny poziom.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="orbit-item" style="--i: 4;">
+                            <div class="offer-card">
+                                <div class="offer-content">
+                                    <span class="material-symbols-rounded offer-icon">calendar_month</span>
+                                    <h3>Zajęcia, które pasują do Twojego życia</h3>
+                                    <p class="offer-desc">Twoje zasady, Twój czas. Ucz się rano przed pracą lub
+                                        wieczorem,
+                                        dopasowując lekcje do napiętego grafiku.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="orbit-item" style="--i: 5;">
+                            <div class="offer-card">
+                                <div class="offer-content">
+                                    <span class="material-symbols-rounded offer-icon">devices</span>
+                                    <h3>Hiszpański w salonie lub na plaży</h3>
+                                    <p class="offer-desc">Oszczędzaj czas na dojazdach. Ucz się wygodnie online,
+                                        gdziekolwiek jesteś – wystarczy szybki internet.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="orbit-item" style="--i: 6;">
+                            <div class="offer-card">
+                                <div class="offer-content">
+                                    <span class="material-symbols-rounded offer-icon">school</span>
+                                    <h3>Zdobądź certyfikat i zdaj na 100%</h3>
+                                    <p class="offer-desc">Skupiamy się na twardych wymaganiach egzaminacyjnych,
+                                        strategiach
+                                        rozwiązywania testów i eliminacji błędów.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="orbit-item" style="--i: 7;">
+                            <div class="offer-card">
+                                <div class="offer-content">
+                                    <span class="material-symbols-rounded offer-icon">mood</span>
+                                    <h3>Nauka bez cienia presji</h3>
+                                    <p class="offer-desc">Błędy to droga do sukcesu. Na lekcjach pijemy kawę, śmiejemy
+                                        się i
+                                        chłoniemy wiedzę w domowej atmosferze.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sekcja: Dla kogo są te zajęcia -->
+        <section id="target-audience" class="section target-audience-section bg-light">
+            <div class="container">
+                <h2 class="section-title">Dla kogo są te zajęcia?</h2>
+                <div class="target-grid">
+                    <div class="target-card">
+                        <h3>Dla osób zaczynających od&nbsp;zera</h3>
+                        <p>Chcesz się uczyć hiszpańskiego, ale nie wiesz, od czego zacząć. Pokażę Ci, jak szybko
+                            i&nbsp;bezstresowo zbudować solidne podstawy.</p>
+                    </div>
+                    <div class="target-card">
+                        <h3>Dla tych, którzy rozumieją, ale nie mówią</h3>
+                        <p>Znasz zasady i słówka, ale blokuje Cię stres przed mówieniem. Zbudujemy Twoją pewność siebie
+                            przez ciągłe, żywe konwersacje.</p>
+                    </div>
+                    <div class="target-card">
+                        <h3>Dla maturzystów i&nbsp;osób przygotowujących się do&nbsp;DELE</h3>
+                        <p>Zbliża się egzamin i potrzebujesz konkretnego planu działania, aby zdobyć upragnione 100%.
+                            Posiadam twardą wiedzę egzaminacyjną.</p>
+                    </div>
+                    <div class="target-card">
+                        <h3>Dla osób planujących wyjazd do&nbsp;Hiszpanii</h3>
+                        <p>Przeprowadzasz się lub dużo podróżujesz i chcesz płynnie dogadywać się z lokalsami w
+                            codziennych, życiowych sytuacjach.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sekcja: Jak wygląda współpraca -->
+        <section id="how-it-works" class="section process-section bg-dark">
+            <div class="container">
+                <h2 class="section-title">Jak wygląda współpraca?</h2>
+                <div class="process-steps">
+                    <div class="process-step">
+                        <div class="step-number">1</div>
+                        <h3>Rezerwujesz bezpłatną konsultację</h3>
+                        <p>Wybierasz dogodny termin. Poznajemy się i sprawdzamy, czy nadajemy na tych samych falach. To
+                            nic nie kosztuje.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="step-number">2</div>
+                        <h3>Ustalamy poziom i&nbsp;cel nauki</h3>
+                        <p>Rozmawiamy o Twoich potrzebach, wyłapujemy ewentualne braki i ustalamy realny, wymierny plan
+                            działania na najbliższe miesiące.</p>
+                    </div>
+                    <div class="process-step">
+                        <div class="step-number">3</div>
+                        <h3>Rozpoczynamy zajęcia dopasowane do&nbsp;Ciebie</h3>
+                        <p>Wskakujemy w rytm efektywnej nauki. Koniec z nudnymi podręcznikami. 80% naszych spotkań to
+                            czyste, żywe mówienie.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sekcja: Opinie -->
+        <section id="testimonials" class="section testimonials-section bg-light">
+            <div class="container">
+                <h2 class="section-title">Co mówią moi uczniowie?</h2>
+                <div class="testimonials-grid">
+                    <div class="testimonial-card">
+                        <span class="quote-icon">"</span>
+                        <p class="testimonial-text">Bardzo konkretne przygotowanie pod DELE. Eliminacja błędów i świetna
+                            atmosfera bez stresu sprawiły, że na egzamin szłam pewna siebie i spokojna o wynik.</p>
+                        <hr>
+                        <p class="testimonial-author"><strong>Anna</strong><br><span>Cel: Egzamin DELE</span></p>
+                    </div>
+                    <div class="testimonial-card">
+                        <span class="quote-icon">"</span>
+                        <p class="testimonial-text">Uczyłem się przez lata w szkole i nic. Dopiero tu, na zajęciach
+                            mówiąc przez 80% czasu, przełamałem w końcu barierę językową. Genialne podejście!</p>
+                        <hr>
+                        <p class="testimonial-author"><strong>Piotr</strong><br><span>Cel: Płynność mówienia</span></p>
+                    </div>
+                    <div class="testimonial-card">
+                        <span class="quote-icon">"</span>
+                        <p class="testimonial-text">Planowaliśmy z mężem wyjazd i potrzebowaliśmy szybkiego języka
+                            ulicy. Zajęcia idealnie dopasowane pod nasze potrzeby – żywy, prawdziwy hiszpański od
+                            pierwszej lekcji!</p>
+                        <hr>
+                        <p class="testimonial-author"><strong>Monika</strong><br><span>Cel: Przeprowadzka</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="section about-section">
+            <div class="container">
+                <h2 class="section-title">O Mnie</h2>
+                <div class="about-content">
+                    <div class="about-image-wrapper">
+                        <img src="assets/images/about_me.webp" alt="Twoja Nauczycielka Hiszpańskiego" class="about-img"
+                            width="400" height="auto">
+                    </div>
+                    <div class="about-text">
+                        <h3>¡Hola! Jestem Twoją przewodniczką po świecie hiszpańskiego 💃</h3>
+                        <p>Język hiszpański to moja <strong>pasja, styl życia i sposób na łączenie ludzi</strong>. Od
+                            lat
+                            uczę się, uczę innych i nieustannie odkrywam <strong>bogactwo kultury</strong> krajów
+                            hiszpańskojęzycznych, którą z radością przekazuję dalej. Kocham kontakt z ludźmi i
+                            naturalnie
+                            zarażam ich <strong>entuzjazmem do języka, muzyki i latynoskiego temperamentu</strong>.</p>
+                        <p>Ruch jest dla mnie równie ważny jak słowo. Tańczę salsę i bachatę, a od kilku lat z pełnym
+                            zaangażowaniem rozwijam się w tańcu orientalnym, który stał się moją kolejną przestrzenią
+                            wyrażania emocji i pasji. Taniec daje mi <strong>energię, wolność i inspirację</strong> –
+                            tak
+                            samo jak nauczanie.</p>
+                        <p>Uwielbiam sport, podróże i nowe wyzwania, bo to one <strong>poszerzają horyzonty</strong> i
+                            pozwalają patrzeć na świat z różnych perspektyw. Stale się rozwijam – obecnie jestem również
+                            w
+                            trakcie uzyskiwania uprawnień do <strong>tłumaczeń przysięgłych</strong> z języka
+                            hiszpańskiego,
+                            łącząc <strong>precyzję języka z odpowiedzialnością zawodową</strong>.</p>
+                        <p>Hiszpański to dla mnie nie tylko gramatyka – to <strong>emocje, kultura, relacje i
+                                energia</strong>, którą chcę dzielić się z innymi.</p>
+                        <p class="signature">Vamos a bailar con las palabras! <br><strong>– Twoja Nauczycielka</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="section contact-section">
+            <div class="container">
+                <h2 class="section-title">Skontaktuj się ze mną</h2>
+                <div class="contact-wrapper">
+                    <div class="contact-info">
+                        <div class="info-item">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                <path
+                                    d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                            </svg>
+                            <p><a href="mailto:carolalmadeoriente@gmail.com">carolalmadeoriente@gmail.com</a></p>
+                        </div>
+                        <div class="info-item">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                <path
+                                    d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.21c.28-.26.36-.65.25-1.01A11.36 11.36 0 0 0 8.59 4c-.59 0-1.07.48-1.07 1.07v3.18c0 .59.47 1.07 1.07 1.07 7.61 0 13.8 6.19 13.8 13.8 0 .59.48 1.07 1.07 1.07h3.18c.59 0 1.07-.48 1.07-1.07 0-2.13-.53-4.17-1.47-6.04z" />
+                            </svg>
+                            <p><a href="tel:+48796868967">796-868-967</a></p>
+                        </div>
+                        <div class="info-item">
+                            <svg viewBox="0 0 448 512" width="24" height="24" fill="currentColor">
+                                <path
+                                    d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z" />
+                            </svg>
+                            <p><a href="https://instagram.com/fuegolingua_sin_limites"
+                                    target="_blank">@fuegolingua_sin_limites</a></p>
+                        </div>
+                    </div>
+
+                    <form id="contactForm" class="contact-form">
+                        <h3>Napisz do mnie</h3>
+                        <div class="form-group">
+                            <label for="name">Imię</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Czy chcesz uczyć się od zera?</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="from_scratch" value="tak" checked> Tak</label>
+                                <label><input type="radio" name="from_scratch" value="nie"> Nie, mam już
+                                    podstawy</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="purpose">Jaki jest Twój cel nauki?</label>
+                            <select id="purpose" name="purpose" required>
+                                <option value="" disabled selected>Wybierz cel...</option>
+                                <option value="hobby">Hobby i rozwój osobisty</option>
+                                <option value="podroze">Podróże i turystyka</option>
+                                <option value="praca">Praca i biznes</option>
+                                <option value="szkola">Szkoła / Studia</option>
+                                <option value="kultura">Kultura (muzyka, filmy, literatura)</option>
+                                <option value="inne">Inne</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Wiadomość</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-submit">Wyślij Wiadomość <svg viewBox="0 0 512 512" width="18"
+                                height="18" fill="currentColor" style="margin-left: 10px;">
+                                <path
+                                    d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L277.3 424.9l-40.1 74.5c-5.2 9.7-16.3 14.6-27 11.9S192 499 192 488V392c0-5.3 1.8-10.5 5.1-14.7L362.4 164.7c2.5-7.1-6.5-14.3-13-8.4L170.4 318.2l-32 28.9L17.2 228c-11.2-4.1-17-15.3-14.2-26.6s11.6-19 23.3-18.5l471.8 141.2c8.8 2.7 18.3-8.7 15.6-17.5z" />
+                            </svg>
+                        </button>
+                        <div id="formStatus" class="form-status"></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sekcja: Final CTA -->
+        <section id="final-cta" class="section final-cta-section">
+            <div class="container">
+                <div class="final-cta-content">
+                    <h2>Przestań uczyć się hiszpańskiego.<br><span>Zacznij nim mówić.</span></h2>
+                    <p>Zrób pierwszy krok do biegłości językowej już dziś. Miejsca na zajęcia indywidualne są
+                        ograniczone.</p>
+                    <a href="#contact" class="btn-primary">Umów bezpłatną konsultację</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="page-ornament">
+        <img src="assets/images/ozdobnik.png" alt="" loading="lazy">
+    </div>
+
+    <footer class="main-footer">
+        <p>&copy; 2026 Fuego Lingua. Wszystkie prawa zastrzeżone.</p>
+    </footer>
+
+    <a href="tel:+48796868967" class="floating-call-btn" title="Zadzwoń teraz">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path
+                d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.21c.28-.26.36-.65.25-1.01A11.36 11.36 0 0 0 8.59 4c-.59 0-1.07.48-1.07 1.07v3.18c0 .59.47 1.07 1.07 1.07 7.61 0 13.8 6.19 13.8 13.8 0 .59.48 1.07 1.07 1.07h3.18c.59 0 1.07-.48 1.07-1.07 0-2.13-.53-4.17-1.47-6.04z" />
+        </svg>
+        <span>Zadzwoń</span>
+    </a>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Mobile Navigation ---
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+
+            if (hamburger) {
+                hamburger.addEventListener('click', () => {
+                    navLinks.classList.toggle('active');
+                });
+            }
+
+            // --- Smooth Scrolling ---
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+
+                    // 1. Mutate DOM (invalidate style)
+                    if (navLinks.classList.contains('active')) {
+                        navLinks.classList.remove('active');
+                    }
+
+                    // 2. Push to macrotask queue to ensure styles are applied and layout is stable before scrolling
+                    setTimeout(() => {
+                        const targetElement = document.querySelector(targetId);
+                        if (targetElement) {
+                            targetElement.scrollIntoView({
+                                behavior: 'smooth'
+                            });
+                        }
+                    }, 0);
+                });
+            });
+
+            // --- Contact Form Handling ---
+            const contactForm = document.getElementById('contactForm');
+            const formStatus = document.getElementById('formStatus');
+
+            if (contactForm) {
+                contactForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerText;
+
+                    submitBtn.disabled = true;
+                    submitBtn.innerText = 'Wysyłanie...';
+                    formStatus.innerHTML = '';
+
+                    fetch('assets/php/contact.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                formStatus.innerHTML = '<p class="success">' + data.message + '</p>';
+                                contactForm.reset();
+                            } else {
+                                formStatus.innerHTML = '<p class="error">' + data.message + '</p>';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            let errorMsg = 'Wystąpił błąd podczas wysyłania wiadomości.';
+                            if (error.message) {
+                                errorMsg += ' (Szczegóły: ' + error.message + ')';
+                            }
+                            formStatus.innerHTML = '<p class="error">' + errorMsg + '<br>Upewnij się, że strona otwarta jest na serwerze z obsługą PHP, a nie bezpośrednio z pliku.</p>';
+                        })
+                        .finally(() => {
+                            submitBtn.disabled = false;
+                            submitBtn.innerText = originalBtnText;
+                        });
+                });
+            }
+
+            // --- Lead Recovery System (15 minute timer) ---
+            const LEAD_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
+            const SESSION_KEY = 'fuego_lead_recovered';
+
+            // Check if we already recovered this lead in this session
+            if (!sessionStorage.getItem(SESSION_KEY)) {
+                console.log('Lead recovery timer started: 15 minutes');
+
+                setTimeout(() => {
+                    triggerLeadRecovery();
+                }, LEAD_TIMEOUT);
+            }
+
+            function triggerLeadRecovery() {
+                // Double check session storage just in case
+                if (sessionStorage.getItem(SESSION_KEY)) return;
+
+                console.log('Triggering lead recovery...');
+
+                fetch('assets/php/lead_recovery.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'action=recover_lead'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Lead recovery response:', data);
+                        if (data.success) {
+                            // Mark as recovered so we don't send again this session
+                            sessionStorage.setItem(SESSION_KEY, 'true');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Lead recovery error:', error);
+                    });
+            }
+        });
+    </script>
+</body>
+
+</html>
+
+<!-- test -->
