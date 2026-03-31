@@ -12,7 +12,7 @@
 	--transition-fast: 0.3s ease;
 
 	--shadow-lux: 0 20px 40px oklch(0% 0 0 / 15%);
-	--glass-blur: 12px;
+	--glass-blur: 6px; /* Reduced from 12px for performance */
 }
 
 * {
@@ -28,6 +28,17 @@ body {
 	background: var(--fuego-cream);
 	overflow-x: hidden;
 	width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 html {
@@ -204,7 +215,13 @@ h3 {
 	align-items: center;
 	position: relative;
 	overflow: hidden;
-	background: linear-gradient(135deg, oklch(98% 0.02 85), oklch(90% 0.05 70)), url('../images/bg.jpg');
+	background:
+		linear-gradient(135deg, oklch(98% 0.02 85), oklch(90% 0.05 70)),
+		image-set(
+			url('../images/bg.avif') type('image/avif'),
+			url('../images/bg.webp') type('image/webp'),
+			url('../images/bg.jpg') type('image/jpeg')
+		);
 	background-size: cover;
 	background-position: center;
 	background-blend-mode: overlay;
@@ -298,7 +315,7 @@ h3 {
 		object-fit: contain;
 		position: relative;
 		z-index: 2;
-		filter: drop-shadow(-20px 20px 40px oklch(0% 0 0 / 20%));
+		box-shadow: -20px 20px 40px oklch(0% 0 0 / 20%); /* Replaced drop-shadow */
 		/* New elegant dancing sway rather than standard bobbing */
 		animation: flamencoSway 8s ease-in-out infinite;
 		transform-origin: bottom center; /* Swaying from the feet */
@@ -417,6 +434,7 @@ h3 {
 	perspective: 1200px; /* Perspective for the 3D effect */
 	transform-style: preserve-3d; /* Force children to share 3D space */
 	margin: 4rem 0;
+	contain: layout paint style; /* Optimization */
 }
 
 /* Center Image (The Axis) */
@@ -426,7 +444,7 @@ h3 {
 	width: auto;
 	/* Translate Y to push her upwards so she towers over the orbit */
 	pointer-events: none;
-	filter: drop-shadow(0 20px 30px oklch(0% 0 0 / 20%));
+	box-shadow: 0 20px 30px oklch(0% 0 0 / 20%); /* Replaced drop-shadow */
 	animation: floatCenter 6s ease-in-out infinite;
 	z-index: 2; /* Ensure she pops over the back elements */
 }
@@ -475,7 +493,7 @@ h3 {
 }
 
 /* Flame Card (Inside the Orbit Item) */
-.offer-card {
+.offer-card-orbit {
 	/* Glowing Fire Sphere Shape */
 	width: 100%;
 	height: 100%;
@@ -590,16 +608,12 @@ h3 {
 /* Dancing flames animation */
 @keyframes danceFlames {
 	0% {
-		transform: translateY(0) scale(1) rotate(-2deg);
-		opacity: 0.5;
-	}
-	50% {
-		transform: translateY(-10px) scale(1.05) rotate(1deg);
-		opacity: 0.8;
+		transform: translateY(0) scale(1.01);
+		opacity: 0.6;
 	}
 	100% {
-		transform: translateY(0) scale(0.95) rotate(3deg);
-		opacity: 0.6;
+		transform: translateY(-5px) scale(0.98);
+		opacity: 0.8;
 	}
 }
 
@@ -998,26 +1012,37 @@ h3 {
 
 .info-item {
 	margin-bottom: 2.5rem;
-	display: flex;
-	align-items: center;
 	font-size: 1.1rem;
 
-	svg {
-		width: 50px;
-		height: 50px;
-		margin-right: 1.5rem;
-		background: oklch(100% 0 0 / 20%);
-		padding: 12px;
-		border-radius: 50%;
+	p {
 		display: flex;
-		justify-content: center;
 		align-items: center;
-		transition: var(--transition-fast);
+		gap: 0.5rem;
+		margin: 0;
+	}
+}
+
+.info-emoji {
+	font-size: 1.2rem;
+	flex-shrink: 0;
+}
+
+.info-icon-right {
+	display: inline-flex;
+	align-items: center;
+	opacity: 0.55;
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: oklch(100% 0 0);
+	transition: opacity 0.2s ease;
+
+	svg {
+		display: block;
+		fill: oklch(100% 0 0);
 	}
 
-	&:hover svg {
-		background: oklch(100% 0 0 / 40%);
-		transform: scale(1.1);
+	.info-item:hover & {
+		opacity: 0.85;
 	}
 }
 
