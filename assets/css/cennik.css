@@ -147,6 +147,11 @@
 }
 
 /* Specific Card Themes */
+.starter-card .card-header {
+    background: linear-gradient(135deg, oklch(45% 0.1 50), oklch(35% 0.1 50));
+    border-bottom: 4px solid var(--fuego-gold);
+}
+
 .premium-card .card-header {
     background: linear-gradient(135deg, oklch(15% 0.02 30), oklch(10% 0.02 30));
     border-bottom: 4px solid var(--fuego-red);
