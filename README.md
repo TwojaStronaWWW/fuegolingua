@@ -22,7 +22,7 @@
 
 **Fuego Lingua** to nowoczesna platforma wizytówkowa dedykowana nauce języka hiszpańskiego (lekcje indywidualne, kursy biznesowe, konwersacje oraz przygotowanie do wyjazdów i branżowych zastosowań).
 
-W architekturze serwisu połączono bezkompromisową lekkość czystego frontendu z inżynierskim rygorem potoków CI/CD wzorowanych na projektach **Gal Anonim** i **_site-template**:
+W architekturze serwisu połączono bezkompromisową lekkość czystego frontendu z inżynierskim rygorem potoków CI/CD standardu **TwojaStronaWWW Enterprise Web Platform**:
 - **0 ciężkich bibliotek testowych:** Natywny silnik `node:test` i asercje `node:assert/strict` wbudowane w Node.js 22 (brak Jesta, Mocha, Babela czy Webpacka).
 - **Lekki Mock DOM (`tests/helpers/mock-dom.js`):** Umożliwia testowanie interakcji przeglądarkowych bez instalowania 150 MB paczki `jsdom`.
 - **Wydajność CI/CD poniżej 60 sekund:** Cały potok (składnia JS, walidacja PHP, testy jednostkowe, audyt Lighthouse CI oraz transfer SFTP) zamyka się w kilkadziesiąt sekund.
