@@ -142,12 +142,104 @@ export function initScrollAnimations(doc = document) {
   return orbitRing;
 }
 
+export function initLightbox(doc = document) {
+  const modal = doc.getElementById('image-lightbox');
+  const items = Array.from(doc.querySelectorAll('.pricing-gallery-item, [data-lightbox]'));
+
+  if (!modal || !items.length) return null;
+
+  const imgEl = modal.querySelector('#lightbox-image');
+  const captionEl = modal.querySelector('#lightbox-caption');
+  const closeBtn = modal.querySelector('#lightbox-close');
+  const prevBtn = modal.querySelector('#lightbox-prev');
+  const nextBtn = modal.querySelector('#lightbox-next');
+  const backdrop = modal.querySelector('#lightbox-backdrop');
+
+  let currentIndex = 0;
+  let lastFocusedElement = null;
+
+  const images = items.map(item => {
+    const img = item.querySelector?.('img') || item;
+    return {
+      src: img?.getAttribute?.('src') || '',
+      alt: img?.getAttribute?.('alt') || ''
+    };
+  });
+
+  const updateLightbox = (index) => {
+    currentIndex = (index + images.length) % images.length;
+    const current = images[currentIndex];
+    if (imgEl && current) {
+      imgEl.setAttribute('src', current.src);
+      imgEl.setAttribute('alt', current.alt);
+    }
+    if (captionEl && current) {
+      captionEl.textContent = current.alt;
+    }
+  };
+
+  const openLightbox = (index, triggerEl = null) => {
+    lastFocusedElement = triggerEl;
+    updateLightbox(index);
+    modal.removeAttribute('hidden');
+    modal.classList.add('is-open');
+    if (doc.body) doc.body.classList.add('lightbox-open');
+    if (closeBtn && typeof closeBtn.focus === 'function') {
+      closeBtn.focus();
+    }
+  };
+
+  const closeLightbox = () => {
+    modal.classList.remove('is-open');
+    modal.setAttribute('hidden', '');
+    if (doc.body) doc.body.classList.remove('lightbox-open');
+    if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+      lastFocusedElement.focus();
+    }
+  };
+
+  const showNext = () => updateLightbox(currentIndex + 1);
+  const showPrev = () => updateLightbox(currentIndex - 1);
+
+  items.forEach((item, index) => {
+    item.addEventListener('click', (e) => {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      openLightbox(index, item);
+    });
+  });
+
+  closeBtn?.addEventListener('click', closeLightbox);
+  backdrop?.addEventListener('click', closeLightbox);
+  nextBtn?.addEventListener('click', showNext);
+  prevBtn?.addEventListener('click', showPrev);
+
+  const keyHandler = (e) => {
+    if (modal.hasAttribute('hidden') || !modal.classList.contains('is-open')) return;
+
+    if (e.key === 'Escape') {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      closeLightbox();
+    } else if (e.key === 'ArrowRight') {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      showNext();
+    } else if (e.key === 'ArrowLeft') {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      showPrev();
+    }
+  };
+
+  doc.addEventListener('keydown', keyHandler);
+
+  return { modal, items, openLightbox, closeLightbox, showNext, showPrev, keyHandler, getCurrentIndex: () => currentIndex };
+}
+
 // Inicjalizacja w przeglądarce
 if (typeof document !== 'undefined') {
   const runInit = () => {
     initNavigation(document);
     initSmoothScroll(document);
     initTabs(document);
+    initLightbox(document);
     initScrollAnimations(document);
   };
 

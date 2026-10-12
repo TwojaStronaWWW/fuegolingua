@@ -91,26 +91,50 @@
         <section class="pricing-section bg-light">
             <div class="container">
                 
-                <!-- Visual Gallery Grid -->
-                <div class="pricing-gallery mb-5">
-                    <div class="pricing-gallery-item">
+                <!-- Visual Gallery Grid (Kliknij, aby powiększyć) -->
+                <div class="pricing-gallery mb-5" aria-label="Galeria plakatów cennika">
+                    <button type="button" class="pricing-gallery-item" aria-haspopup="dialog" aria-label="Powiększ plakat: Cennik Poziom A1-A2">
                         <img src="https://media.fuegolingua.pl/9AE5C810-39A8-4EB4-99B7-61E7A2D2A51C.webp" alt="Cennik Fuego Lingua - Poziom A1-A2" loading="lazy">
-                    </div>
-                    <div class="pricing-gallery-item">
+                        <span class="gallery-zoom-overlay" aria-hidden="true">
+                            <span class="material-symbols-rounded">zoom_in</span>
+                            <span>Powiększ</span>
+                        </span>
+                    </button>
+                    <button type="button" class="pricing-gallery-item" aria-haspopup="dialog" aria-label="Powiększ plakat: Cennik Poziom B1-B2">
                         <img src="https://media.fuegolingua.pl/255B83E5-A22A-40FB-B809-ED709C84C02B.webp" alt="Cennik Fuego Lingua - Poziom B1-B2" loading="lazy">
-                    </div>
-                    <div class="pricing-gallery-item">
+                        <span class="gallery-zoom-overlay" aria-hidden="true">
+                            <span class="material-symbols-rounded">zoom_in</span>
+                            <span>Powiększ</span>
+                        </span>
+                    </button>
+                    <button type="button" class="pricing-gallery-item" aria-haspopup="dialog" aria-label="Powiększ plakat: Cennik Poziom Extreme C1-C2">
                         <img src="https://media.fuegolingua.pl/7C693E58-C2E7-4A0F-87AD-B4C2628E23A6.webp" alt="Cennik Fuego Lingua - Poziom Extreme C1-C2" loading="lazy">
-                    </div>
-                    <div class="pricing-gallery-item">
-                        <img src="https://media.fuegolingua.pl/9CCC95D0-91F8-474C-9317-D08CD55DB71B.webp" alt="Cennik Fuego Lingua - Turystyka" loading="lazy">
-                    </div>
-                    <div class="pricing-gallery-item">
+                        <span class="gallery-zoom-overlay" aria-hidden="true">
+                            <span class="material-symbols-rounded">zoom_in</span>
+                            <span>Powiększ</span>
+                        </span>
+                    </button>
+                    <button type="button" class="pricing-gallery-item" aria-haspopup="dialog" aria-label="Powiększ plakat: Hiszpański w Biznesie">
                         <img src="https://media.fuegolingua.pl/602D16E4-9641-4AEF-A765-16511E39830B.webp" alt="Cennik Fuego Lingua - Biznes" loading="lazy">
-                    </div>
-                    <div class="pricing-gallery-item">
+                        <span class="gallery-zoom-overlay" aria-hidden="true">
+                            <span class="material-symbols-rounded">zoom_in</span>
+                            <span>Powiększ</span>
+                        </span>
+                    </button>
+                    <button type="button" class="pricing-gallery-item" aria-haspopup="dialog" aria-label="Powiększ plakat: Hiszpański w Stolarce i Budownictwie">
                         <img src="https://media.fuegolingua.pl/2D63724C-F780-4318-9439-1333193E515F.webp" alt="Cennik Fuego Lingua - Budownictwo" loading="lazy">
-                    </div>
+                        <span class="gallery-zoom-overlay" aria-hidden="true">
+                            <span class="material-symbols-rounded">zoom_in</span>
+                            <span>Powiększ</span>
+                        </span>
+                    </button>
+                    <button type="button" class="pricing-gallery-item" aria-haspopup="dialog" aria-label="Powiększ plakat: Hiszpański w Turystyce">
+                        <img src="https://media.fuegolingua.pl/9CCC95D0-91F8-474C-9317-D08CD55DB71B.webp" alt="Cennik Fuego Lingua - Turystyka" loading="lazy">
+                        <span class="gallery-zoom-overlay" aria-hidden="true">
+                            <span class="material-symbols-rounded">zoom_in</span>
+                            <span>Powiększ</span>
+                        </span>
+                    </button>
                 </div>
 
                 <!-- Tabs Component (WAI-ARIA Pattern) -->
@@ -398,6 +422,26 @@
     <footer class="main-footer">
         <p>&copy; 2026 Fuego Lingua. Wszystkie prawa zastrzeżone.</p>
     </footer>
+
+    <!-- Image Lightbox Modal (WAI-ARIA Pattern) -->
+    <div id="image-lightbox" class="lightbox-modal" role="dialog" aria-modal="true" aria-label="Podgląd plakatu oferty" hidden>
+        <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+        <div class="lightbox-content">
+            <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Zamknij podgląd (Escape)">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+            <button type="button" class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Poprzedni plakat (Strzałka w lewo)">
+                <span class="material-symbols-rounded">chevron_left</span>
+            </button>
+            <figure class="lightbox-figure">
+                <img src="" alt="" class="lightbox-img" id="lightbox-image">
+                <figcaption class="lightbox-caption" id="lightbox-caption"></figcaption>
+            </figure>
+            <button type="button" class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Następny plakat (Strzałka w prawo)">
+                <span class="material-symbols-rounded">chevron_right</span>
+            </button>
+        </div>
+    </div>
 
     <!-- Scripts (Vanilla ES6 Modules) -->
     <script type="module" src="assets/js/main.js"></script>

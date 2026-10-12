@@ -1,7 +1,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { setupMockDom } from '../helpers/mock-dom.js';
-import { initNavigation, initTabs } from '../../assets/js/main.js';
+import { initNavigation, initTabs, initLightbox } from '../../assets/js/main.js';
 
 describe('Nawigacja i interakcje UI (assets/js/main.js)', () => {
   let dom;
@@ -160,5 +160,87 @@ describe('Nawigacja i interakcje UI (assets/js/main.js)', () => {
     // Home na tab3 -> przejście do tab1
     tab3.dispatchEvent({ type: 'keydown', key: 'Home', preventDefault: () => {} });
     assert.equal(tab1.classList.contains('active'), true);
+  });
+
+  test('initLightbox zwraca null gdy brak elementów w DOM', () => {
+    const emptyDom = setupMockDom();
+    const res = initLightbox(emptyDom.mockDocument);
+    assert.equal(res, null);
+  });
+
+  test('initLightbox poprawnie otwiera modal po kliknięciu i obsługuje klawiaturę', () => {
+    const modal = dom.mockDocument.createElement('div');
+    modal.id = 'image-lightbox';
+    modal.setAttribute('hidden', '');
+
+    const imgEl = dom.mockDocument.createElement('img');
+    imgEl.id = 'lightbox-image';
+
+    const captionEl = dom.mockDocument.createElement('div');
+    captionEl.id = 'lightbox-caption';
+
+    const closeBtn = dom.mockDocument.createElement('button');
+    closeBtn.id = 'lightbox-close';
+
+    const prevBtn = dom.mockDocument.createElement('button');
+    prevBtn.id = 'lightbox-prev';
+
+    const nextBtn = dom.mockDocument.createElement('button');
+    nextBtn.id = 'lightbox-next';
+
+    const backdrop = dom.mockDocument.createElement('div');
+    backdrop.id = 'lightbox-backdrop';
+
+    modal.children.push(imgEl, captionEl, closeBtn, prevBtn, nextBtn, backdrop);
+
+    const galleryItem1 = dom.mockDocument.createElement('button');
+    galleryItem1.className = 'pricing-gallery-item';
+    const img1 = dom.mockDocument.createElement('img');
+    img1.setAttribute('src', 'https://media.fuegolingua.pl/plakat1.webp');
+    img1.setAttribute('alt', 'Plakat 1');
+    galleryItem1.children.push(img1);
+
+    const galleryItem2 = dom.mockDocument.createElement('button');
+    galleryItem2.className = 'pricing-gallery-item';
+    const img2 = dom.mockDocument.createElement('img');
+    img2.setAttribute('src', 'https://media.fuegolingua.pl/plakat2.webp');
+    img2.setAttribute('alt', 'Plakat 2');
+    galleryItem2.children.push(img2);
+
+    dom.elements.set('image-lightbox', modal);
+    dom.elements.set('lightbox-image', imgEl);
+    dom.elements.set('lightbox-caption', captionEl);
+    dom.elements.set('lightbox-close', closeBtn);
+    dom.elements.set('lightbox-prev', prevBtn);
+    dom.elements.set('lightbox-next', nextBtn);
+    dom.elements.set('lightbox-backdrop', backdrop);
+    dom.elements.set('item1', galleryItem1);
+    dom.elements.set('item2', galleryItem2);
+
+    const lb = initLightbox(dom.mockDocument);
+    assert.ok(lb);
+
+    // Otwórz plakat 1
+    galleryItem1.dispatchEvent({ type: 'click' });
+    assert.equal(modal.classList.contains('is-open'), true);
+    assert.equal(modal.hasAttribute('hidden'), false);
+    assert.equal(imgEl.getAttribute('src'), 'https://media.fuegolingua.pl/plakat1.webp');
+    assert.equal(captionEl.textContent, 'Plakat 1');
+    assert.equal(closeBtn._focused, true);
+
+    // Nawigacja ArrowRight -> przejście do plakatu 2
+    dom.mockDocument.dispatchEvent({ type: 'keydown', key: 'ArrowRight', preventDefault: () => {} });
+    assert.equal(imgEl.getAttribute('src'), 'https://media.fuegolingua.pl/plakat2.webp');
+    assert.equal(captionEl.textContent, 'Plakat 2');
+
+    // Nawigacja ArrowLeft -> powrót do plakatu 1
+    dom.mockDocument.dispatchEvent({ type: 'keydown', key: 'ArrowLeft', preventDefault: () => {} });
+    assert.equal(imgEl.getAttribute('src'), 'https://media.fuegolingua.pl/plakat1.webp');
+
+    // Klawisz Escape -> zamknięcie i powrót do item1
+    dom.mockDocument.dispatchEvent({ type: 'keydown', key: 'Escape', preventDefault: () => {} });
+    assert.equal(modal.classList.contains('is-open'), false);
+    assert.equal(modal.hasAttribute('hidden'), true);
+    assert.equal(galleryItem1._focused, true);
   });
 });

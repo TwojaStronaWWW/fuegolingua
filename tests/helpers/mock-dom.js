@@ -71,6 +71,11 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
     reset() { this.value = ''; }
     querySelector(sel) {
       const parts = sel.split(',').map(s => s.trim()).filter(Boolean);
+      for (const child of this.children) {
+        if (parts.some(p => matchSelector(child, p))) return child;
+        const sub = child.querySelector?.(sel);
+        if (sub) return sub;
+      }
       for (const el of elements.values()) {
         if (parts.some(p => matchSelector(el, p))) return el;
       }
