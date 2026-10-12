@@ -69,34 +69,63 @@ export function initSmoothScroll(doc = document) {
 }
 
 export function initTabs(doc = document) {
-  const tabs = doc.querySelectorAll('.pricing-tab');
-  const contents = doc.querySelectorAll('.pricing-content');
+  const tabs = Array.from(doc.querySelectorAll('.pricing-tab, [role="tab"]'));
+  const contents = Array.from(doc.querySelectorAll('.pricing-content, [role="tabpanel"]'));
 
   if (!tabs.length || !contents.length) return null;
 
-  tabs.forEach(tab => {
+  const activateTab = (activeTab, setFocus = false) => {
+    const targetId = activeTab.getAttribute('data-target') || activeTab.getAttribute('aria-controls');
+
+    tabs.forEach(tab => {
+      const isCurrent = (tab === activeTab);
+      tab.classList.toggle('active', isCurrent);
+      tab.setAttribute('aria-selected', String(isCurrent));
+      tab.setAttribute('tabindex', isCurrent ? '0' : '-1');
+    });
+
+    contents.forEach(content => {
+      const isTarget = content.id === targetId;
+      content.classList.toggle('active', isTarget);
+      if (isTarget) {
+        content.removeAttribute('hidden');
+      } else {
+        content.setAttribute('hidden', '');
+      }
+    });
+
+    if (setFocus && typeof activeTab.focus === 'function') {
+      activeTab.focus();
+    }
+  };
+
+  tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+      activateTab(tab, false);
+    });
 
-      contents.forEach(c => {
-        c.style.display = 'none';
-        c.classList.remove('active');
-      });
+    tab.addEventListener('keydown', (e) => {
+      let targetIndex = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        targetIndex = (index + 1) % tabs.length;
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        targetIndex = (index - 1 + tabs.length) % tabs.length;
+      } else if (e.key === 'Home') {
+        targetIndex = 0;
+      } else if (e.key === 'End') {
+        targetIndex = tabs.length - 1;
+      }
 
-      const targetId = tab.getAttribute('data-target');
-      const targetContent = doc.getElementById(targetId);
-      if (targetContent) {
-        targetContent.style.display = 'block';
-        setTimeout(() => {
-          targetContent.classList.add('active');
-        }, 10);
+      if (targetIndex !== -1) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        activateTab(tabs[targetIndex], true);
       }
     });
   });
 
-  return { tabs, contents };
+  return { tabs, contents, activateTab };
 }
+
 
 export function initScrollAnimations(doc = document) {
   const orbitRing = doc.querySelector('.orbit-ring');

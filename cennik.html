@@ -21,12 +21,11 @@
     <meta property="og:url" content="https://fuegolingua.pl/cennik.html">
     <meta property="og:title" content="Cennik - Fuego Lingua">
     <meta property="og:description" content="Sprawdź cennik zajęć języka hiszpańskiego dopasowany do Twoich potrzeb.">
-    <meta property="og:image" content="assets/images/logohero.png">
+    <meta property="og:image" content="https://media.fuegolingua.pl/fuegolingua-logo_raster.webp">
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-    <link rel="icon" type="image/png" href="assets/images/logofoto.png">
 
     <!-- Schema.org JSON-LD -->
     <script type="application/ld+json">
@@ -50,26 +49,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet" />
 
     <!-- Core CSS -->
-    <link rel="stylesheet" href="assets/css/style.css?v=3.6">
-    <link rel="stylesheet" href="assets/css/media.css?v=3.6">
+    <link rel="stylesheet" href="assets/css/style.css?v=3.7">
+    <link rel="stylesheet" href="assets/css/media.css?v=3.7">
     <!-- Cennik specific CSS -->
-    <link rel="stylesheet" href="assets/css/cennik.css?v=1.0">
-
-    <style>
-        .main-header {
-            background: oklch(100% 0 0 / 95%);
-            box-shadow: 0 4px 20px oklch(0% 0 0 / 5%);
-        }
-        @media (max-width: 768px) {
-            .hamburger { display: block; width: 44px; height: 44px; }
-            .nav-links { display: none; }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/cennik.css?v=1.1">
 </head>
 
 <body>
 
-    <header class="main-header">
+    <header class="main-header pricing-page-header">
         <nav class="navbar">
             <div class="logo">
                 <a href="index.html#hero">
@@ -80,7 +68,7 @@
                 <li><a href="index.html#hero">Start</a></li>
                 <li><a href="index.html#offer">Oferta</a></li>
                 <li><a href="index.html#about">O Mnie</a></li>
-                <li><a href="cennik.html" class="active" style="color: var(--fuego-red);">Cennik</a></li>
+                <li><a href="cennik.html" class="active">Cennik</a></li>
                 <li><a href="index.html#contact" class="btn-cta-nav">Kontakt</a></li>
             </ul>
             <div class="hamburger" aria-label="Menu" role="button" tabindex="0">
@@ -102,6 +90,8 @@
 
         <section class="pricing-section bg-light">
             <div class="container">
+                
+                <!-- Visual Gallery Grid -->
                 <div class="pricing-gallery mb-5">
                     <div class="pricing-gallery-item">
                         <img src="https://media.fuegolingua.pl/9AE5C810-39A8-4EB4-99B7-61E7A2D2A51C.webp" alt="Cennik Fuego Lingua - Poziom A1-A2" loading="lazy">
@@ -123,14 +113,14 @@
                     </div>
                 </div>
 
-                <!-- Tabs for switching -->
-                <div class="pricing-tabs mt-5">
-                    <button class="pricing-tab active" data-target="specjalistyczne">Język Specjalistyczny</button>
-                    <button class="pricing-tab" data-target="poziomy">Ogólne Poziomy</button>
+                <!-- Tabs Component (WAI-ARIA Pattern) -->
+                <div class="pricing-tabs mt-5" role="tablist" aria-label="Wybór kategorii kursów">
+                    <button class="pricing-tab active" id="tab-specjalistyczne" role="tab" aria-selected="true" aria-controls="specjalistyczne" tabindex="0" data-target="specjalistyczne">Język Specjalistyczny</button>
+                    <button class="pricing-tab" id="tab-poziomy" role="tab" aria-selected="false" aria-controls="poziomy" tabindex="-1" data-target="poziomy">Ogólne Poziomy</button>
                 </div>
 
                 <!-- Specjalistyczne (Biznes, Budownictwo, Turystyka) -->
-                <div class="pricing-content active" id="specjalistyczne">
+                <div class="pricing-content active" id="specjalistyczne" role="tabpanel" aria-labelledby="tab-specjalistyczne">
                     
                     <!-- BIZNES -->
                     <div class="pricing-card premium-card">
@@ -139,32 +129,34 @@
                             <p>Komunikacja, która otwiera możliwości</p>
                         </div>
                         <div class="card-body">
-                            <table class="pricing-table">
-                                <thead>
-                                    <tr>
-                                        <th>Cennik za lekcję</th>
-                                        <th>1 H <br><span class="material-symbols-rounded">schedule</span></th>
-                                        <th>1,5 H <br><span class="material-symbols-rounded">schedule</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">psychology</span> Poziom Podstawowy</div></td>
-                                        <td class="price">130 zł</td>
-                                        <td class="price">160 zł</td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">trending_up</span> Poziom Średniozaawansowany</div></td>
-                                        <td class="price">160 zł</td>
-                                        <td class="price">190 zł</td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">military_tech</span> Poziom Zaawansowany</div></td>
-                                        <td class="price">190 zł</td>
-                                        <td class="price">220 zł</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="pricing-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Cennik za lekcję</th>
+                                            <th>1 H <br><span class="material-symbols-rounded">schedule</span></th>
+                                            <th>1,5 H <br><span class="material-symbols-rounded">schedule</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">psychology</span> Poziom Podstawowy</div></td>
+                                            <td class="price">130 zł</td>
+                                            <td class="price">160 zł</td>
+                                        </tr>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">trending_up</span> Poziom Średniozaawansowany</div></td>
+                                            <td class="price">160 zł</td>
+                                            <td class="price">190 zł</td>
+                                        </tr>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">military_tech</span> Poziom Zaawansowany</div></td>
+                                            <td class="price">190 zł</td>
+                                            <td class="price">220 zł</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         <div class="card-footer">
                             <div class="info-box">
@@ -177,6 +169,9 @@
                                 <div><span class="material-symbols-rounded">check_circle</span> Międzynarodowa komunikacja</div>
                             </div>
                         </div>
+                        <div class="card-cta-wrapper">
+                            <a href="index.html#contact" class="card-cta-btn"><span class="material-symbols-rounded">chat</span> Umów bezpłatną rozmowę</a>
+                        </div>
                     </div>
 
                     <!-- BUDOWNICTWO -->
@@ -186,38 +181,43 @@
                             <p>Język, który buduje relacje w branży</p>
                         </div>
                         <div class="card-body">
-                            <table class="pricing-table">
-                                <thead>
-                                    <tr>
-                                        <th>Cennik za lekcję</th>
-                                        <th>1 H <br><span class="material-symbols-rounded">schedule</span></th>
-                                        <th>1,5 H <br><span class="material-symbols-rounded">schedule</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">foundation</span> Poziom Podstawowy</div></td>
-                                        <td class="price">150 zł</td>
-                                        <td class="price">170 zł</td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">architecture</span> Poziom Średniozaawansowany</div></td>
-                                        <td class="price">180 zł</td>
-                                        <td class="price">200 zł</td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">domain_verification</span> Poziom Zaawansowany</div></td>
-                                        <td class="price">210 zł</td>
-                                        <td class="price">230 zł</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="pricing-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Cennik za lekcję</th>
+                                            <th>1 H <br><span class="material-symbols-rounded">schedule</span></th>
+                                            <th>1,5 H <br><span class="material-symbols-rounded">schedule</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">foundation</span> Poziom Podstawowy</div></td>
+                                            <td class="price">150 zł</td>
+                                            <td class="price">170 zł</td>
+                                        </tr>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">architecture</span> Poziom Średniozaawansowany</div></td>
+                                            <td class="price">180 zł</td>
+                                            <td class="price">200 zł</td>
+                                        </tr>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">domain_verification</span> Poziom Zaawansowany</div></td>
+                                            <td class="price">210 zł</td>
+                                            <td class="price">230 zł</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         <div class="card-footer">
                             <div class="info-box">
                                 <span class="material-symbols-rounded">group_add</span>
                                 Cena maleje o <strong>5 zł</strong> za każdą dodatkową osobę. (Max. 6 osób)
                             </div>
+                        </div>
+                        <div class="card-cta-wrapper">
+                            <a href="index.html#contact" class="card-cta-btn"><span class="material-symbols-rounded">chat</span> Umów bezpłatną rozmowę</a>
                         </div>
                     </div>
 
@@ -228,32 +228,34 @@
                             <p>Język, który otwiera świat</p>
                         </div>
                         <div class="card-body">
-                            <table class="pricing-table">
-                                <thead>
-                                    <tr>
-                                        <th>Cennik za lekcję</th>
-                                        <th>1 H <br><span class="material-symbols-rounded">schedule</span></th>
-                                        <th>1,5 H <br><span class="material-symbols-rounded">schedule</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">flight_takeoff</span> Poziom Podstawowy</div></td>
-                                        <td class="price">100 zł</td>
-                                        <td class="price">120 zł</td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">luggage</span> Poziom Średniozaawansowany</div></td>
-                                        <td class="price">120 zł</td>
-                                        <td class="price">140 zł</td>
-                                    </tr>
-                                    <tr>
-                                        <td><div class="level-info"><span class="material-symbols-rounded">public</span> Poziom Zaawansowany</div></td>
-                                        <td class="price">140 zł</td>
-                                        <td class="price">160 zł</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="pricing-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Cennik za lekcję</th>
+                                            <th>1 H <br><span class="material-symbols-rounded">schedule</span></th>
+                                            <th>1,5 H <br><span class="material-symbols-rounded">schedule</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">flight_takeoff</span> Poziom Podstawowy</div></td>
+                                            <td class="price">100 zł</td>
+                                            <td class="price">120 zł</td>
+                                        </tr>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">luggage</span> Poziom Średniozaawansowany</div></td>
+                                            <td class="price">120 zł</td>
+                                            <td class="price">140 zł</td>
+                                        </tr>
+                                        <tr>
+                                            <td><div class="level-info"><span class="material-symbols-rounded">public</span> Poziom Zaawansowany</div></td>
+                                            <td class="price">140 zł</td>
+                                            <td class="price">160 zł</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         <div class="card-footer">
                             <div class="info-box">
@@ -261,12 +263,15 @@
                                 Cena maleje o <strong>5 zł</strong> za każdą dodatkową osobę. (Max. 6 osób)
                             </div>
                         </div>
+                        <div class="card-cta-wrapper">
+                            <a href="index.html#contact" class="card-cta-btn"><span class="material-symbols-rounded">chat</span> Umów bezpłatną rozmowę</a>
+                        </div>
                     </div>
 
                 </div>
 
                 <!-- Ogólne Poziomy (A1-A2, B1-B2, C1-C2) -->
-                <div class="pricing-content" id="poziomy" style="display: none;">
+                <div class="pricing-content" id="poziomy" role="tabpanel" aria-labelledby="tab-poziomy">
                     
                     <!-- A1-A2 -->
                     <div class="pricing-card starter-card mb-4">
@@ -298,6 +303,9 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="card-cta-wrapper">
+                            <a href="index.html#contact" class="card-cta-btn"><span class="material-symbols-rounded">chat</span> Umów bezpłatną rozmowę</a>
                         </div>
                     </div>
 
@@ -332,6 +340,9 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="card-cta-wrapper">
+                            <a href="index.html#contact" class="card-cta-btn"><span class="material-symbols-rounded">chat</span> Umów bezpłatną rozmowę</a>
+                        </div>
                     </div>
 
                     <!-- C1-C2 EXTREME -->
@@ -364,6 +375,9 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="card-cta-wrapper">
+                            <a href="index.html#contact" class="card-cta-btn"><span class="material-symbols-rounded">chat</span> Umów bezpłatną rozmowę</a>
                         </div>
                     </div>
 

@@ -33,6 +33,7 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
         contains(cls) { return self._classes.has(cls); }
       };
       this.attributes = new Map();
+      this._listeners = new Map();
       this.style = {};
       this.textContent = '';
       this.innerHTML = '';
@@ -58,37 +59,53 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
     removeAttribute(k) { this.attributes.delete(k); }
     hasAttribute(k) { return this.attributes.has(k); }
     addEventListener(evt, fn) {
-      if (!listeners.has(evt)) listeners.set(evt, []);
-      listeners.get(evt).push(fn);
+      if (!this._listeners.has(evt)) this._listeners.set(evt, []);
+      this._listeners.get(evt).push(fn);
     }
     dispatchEvent(evt) {
-      const fns = listeners.get(evt.type) || [];
+      const fns = this._listeners.get(evt.type) || [];
       fns.forEach(fn => fn(evt));
       return true;
     }
     focus() { this._focused = true; }
     reset() { this.value = ''; }
     querySelector(sel) {
-      if (sel.startsWith('#')) return elements.get(sel.slice(1)) || null;
-      if (sel.startsWith('.')) {
-        const cls = sel.slice(1);
-        for (const el of elements.values()) {
-          if (el.classList.contains(cls)) return el;
-        }
+      const parts = sel.split(',').map(s => s.trim()).filter(Boolean);
+      for (const el of elements.values()) {
+        if (parts.some(p => matchSelector(el, p))) return el;
       }
       return null;
     }
     querySelectorAll(sel) {
-      const results = [];
-      if (sel.startsWith('.')) {
-        const cls = sel.slice(1);
-        for (const el of elements.values()) {
-          if (el.classList.contains(cls)) results.push(el);
-        }
-      }
-      return results;
+      return queryAll(sel);
     }
   }
+
+  const matchSelector = (el, rawSel) => {
+    const sel = rawSel.trim();
+    if (!sel) return false;
+    if (sel.startsWith('#')) return el.id === sel.slice(1);
+    if (sel.startsWith('.')) return el.classList.contains(sel.slice(1));
+    const attrMatch = sel.match(/^\[([a-zA-Z0-9_-]+)(?:=["']?([^"']*)["']?)?\]$/);
+    if (attrMatch) {
+      const [, attrName, attrVal] = attrMatch;
+      if (attrVal !== undefined) return el.getAttribute(attrName) === attrVal;
+      return el.hasAttribute(attrName);
+    }
+    if (/^[a-zA-Z0-9]+$/.test(sel)) return el.tagName.toLowerCase() === sel.toLowerCase();
+    return false;
+  };
+
+  const queryAll = (sel) => {
+    const parts = sel.split(',').map(s => s.trim()).filter(Boolean);
+    const matched = new Set();
+    for (const el of elements.values()) {
+      if (parts.some(p => matchSelector(el, p))) {
+        matched.add(el);
+      }
+    }
+    return Array.from(matched);
+  };
 
   const mockDocument = {
     readyState: 'complete',
@@ -96,25 +113,13 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
     documentElement: new MockElement('html'),
     getElementById: (id) => elements.get(id) || null,
     querySelector: (sel) => {
-      if (sel.startsWith('#')) return elements.get(sel.slice(1)) || null;
-      if (sel.startsWith('.')) {
-        const cls = sel.slice(1);
-        for (const el of elements.values()) {
-          if (el.classList.contains(cls)) return el;
-        }
+      const parts = sel.split(',').map(s => s.trim()).filter(Boolean);
+      for (const el of elements.values()) {
+        if (parts.some(p => matchSelector(el, p))) return el;
       }
       return null;
     },
-    querySelectorAll: (sel) => {
-      const results = [];
-      if (sel.startsWith('.')) {
-        const cls = sel.slice(1);
-        for (const el of elements.values()) {
-          if (el.classList.contains(cls)) results.push(el);
-        }
-      }
-      return results;
-    },
+    querySelectorAll: (sel) => queryAll(sel),
     createElement: (tag) => new MockElement(tag),
     addEventListener: (evt, fn) => {
       if (!listeners.has(evt)) listeners.set(evt, []);
