@@ -12,6 +12,7 @@ config/secrets.php
 coverage/
 .nyc_output/
 dist/
+.wrangler/
 
 # API Sessions, Limits & CRM Leads (Zero Data Leakage)
 api/sessions/*

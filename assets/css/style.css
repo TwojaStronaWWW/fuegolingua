@@ -217,11 +217,7 @@ h3 {
 	overflow: hidden;
 	background:
 		linear-gradient(135deg, oklch(98% 0.02 85), oklch(90% 0.05 70)),
-		image-set(
-			url('../images/bg.avif') type('image/avif'),
-			url('../images/bg.webp') type('image/webp'),
-			url('../images/bg.jpg') type('image/jpeg')
-		);
+		url('https://media.fuegolingua.pl/bg.webp');
 	background-size: cover;
 	background-position: center;
 	background-blend-mode: overlay;
@@ -890,7 +886,7 @@ h3 {
 
 /* About Me Section */
 .about-section {
-	background: linear-gradient(oklch(100% 0 0 / 60%), oklch(98% 0.02 85 / 80%)), url('../images/bg.jpg');
+	background: linear-gradient(oklch(100% 0 0 / 60%), oklch(98% 0.02 85 / 80%)), url('https://media.fuegolingua.pl/bg.webp');
 	background-attachment: fixed;
 	background-size: cover;
 	background-position: center;
@@ -1000,7 +996,7 @@ h3 {
 }
 
 .contact-info {
-	background: linear-gradient(oklch(55% 0.22 30 / 95%), oklch(70% 0.2 50 / 95%)), url('../images/bg.jpg');
+	background: linear-gradient(oklch(55% 0.22 30 / 95%), oklch(70% 0.2 50 / 95%)), url('https://media.fuegolingua.pl/bg.webp');
 	background-size: cover;
 	background-blend-mode: overlay;
 	color: oklch(100% 0 0);
