@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 Dokumentacja Blueprintu & Architektury
+    url: https://github.com/TwojaStronaWWW/fuegolingua/blob/main/BLUEPRINT.md
+    about: Sprawdź standardy inżynieryjne i instrukcję wdrożenia szablonu.

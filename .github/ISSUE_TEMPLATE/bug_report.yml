@@ -1,0 +1,46 @@
+name: 🐛 Zgłoszenie Błędu (Bug Report)
+description: Zgłoś problem, regresję lub defekt w projekcie FuegoLingua
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Opisz błąd, aby zespół mógł go szybko zreprodukować i naprawić.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Moduł dotknięty błędem
+      options:
+        - "Interfejs UI / CSS / RWD"
+        - "Logika JavaScript"
+        - "Backend PHP / Formularz / Lead Recovery"
+        - "Potoki CI/CD / GitHub Actions"
+        - "Testy jednostkowe / Jakość"
+        - "Inny"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Oczekiwane zachowanie
+      placeholder: Co powinno się wydarzyć zgodnie z projektem?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Aktualne zachowanie (Błąd)
+      placeholder: Co dzieje się w rzeczywistości? Załącz zrzuty ekranu lub błędy z konsoli (DevTools F12).
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Kroki do zreplikowania
+      value: |
+        1. Otwórz stronę...
+        2. Wykonaj akcję...
+        3. Zaobserwuj błąd...
+    validations:
+      required: true

@@ -13,6 +13,11 @@
     <link rel="preload" href="assets/images/kobieta2.png" as="image" fetchpriority="high">
 
 
+    <!-- SEO & Metadata -->
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://fuegolingua.pl/">
+    <link rel="manifest" href="site.webmanifest">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fuegolingua.pl/">
@@ -21,7 +26,22 @@
     <meta property="og:image" content="assets/images/logohero.png">
 
     <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <link rel="icon" type="image/png" href="assets/images/logofoto.png">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "Fuego Lingua",
+      "url": "https://fuegolingua.pl/",
+      "description": "Nauka hiszpańskiego online z pasją. Indywidualne lekcje, konwersacje i kursy hiszpańskiego dopasowane do Ciebie.",
+      "telephone": "+48796868967",
+      "email": "carolalmadeoriente@gmail.com"
+    }
+    </script>
 
     <!-- Fonts (Non-blocking) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -404,6 +424,12 @@
                     </div>
 
                     <form id="contactForm" class="contact-form">
+                        <!-- Honeypot field (anti-spam bot trap) -->
+                        <div style="display:none;" aria-hidden="true">
+                            <label for="website_url">Nie wypełniaj tego pola:</label>
+                            <input type="text" id="website_url" name="website_url" tabindex="-1" autocomplete="off">
+                        </div>
+
                         <h3>Napisz do mnie</h3>
                         <div class="form-group">
                             <label for="name">Imię</label>
@@ -472,139 +498,9 @@
         </svg>
         <span>Zadzwoń</span>
     </a>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Mobile Navigation ---
-            const hamburger = document.querySelector('.hamburger');
-            const navLinks = document.querySelector('.nav-links');
-
-            if (hamburger) {
-                hamburger.addEventListener('click', () => {
-                    navLinks.classList.toggle('active');
-                });
-            }
-
-            // --- Performance: Stop continuous animations after scroll ---
-            const orbitRing = document.querySelector('.orbit-ring');
-            if (orbitRing) {
-                const stopOrbitOnScroll = () => {
-                    if (window.scrollY > 200) {
-                        orbitRing.style.animationIterationCount = '2'; // Let it finish current cycles
-                        window.removeEventListener('scroll', stopOrbitOnScroll);
-                    }
-                };
-                window.addEventListener('scroll', stopOrbitOnScroll, { passive: true });
-            }
-
-            // --- Smooth Scrolling ---
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href');
-
-                    // 1. Mutate DOM (invalidate style)
-                    if (navLinks.classList.contains('active')) {
-                        navLinks.classList.remove('active');
-                    }
-
-                    // 2. Push to macrotask queue to ensure styles are applied and layout is stable before scrolling
-                    setTimeout(() => {
-                        const targetElement = document.querySelector(targetId);
-                        if (targetElement) {
-                            targetElement.scrollIntoView({
-                                behavior: 'smooth'
-                            });
-                        }
-                    }, 0);
-                });
-            });
-
-            // --- Contact Form Handling ---
-            const contactForm = document.getElementById('contactForm');
-            const formStatus = document.getElementById('formStatus');
-
-            if (contactForm) {
-                contactForm.addEventListener('submit', function (e) {
-                    e.preventDefault();
-
-                    const formData = new FormData(this);
-                    const submitBtn = this.querySelector('button[type="submit"]');
-                    const originalBtnText = submitBtn.innerText;
-
-                    submitBtn.disabled = true;
-                    submitBtn.innerText = 'Wysyłanie...';
-                    formStatus.innerHTML = '';
-
-                    fetch('assets/php/contact.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                formStatus.innerHTML = '<p class="success">' + data.message + '</p>';
-                                contactForm.reset();
-                            } else {
-                                formStatus.innerHTML = '<p class="error">' + data.message + '</p>';
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            let errorMsg = 'Wystąpił błąd podczas wysyłania wiadomości.';
-                            if (error.message) {
-                                errorMsg += ' (Szczegóły: ' + error.message + ')';
-                            }
-                            formStatus.innerHTML = '<p class="error">' + errorMsg + '<br>Upewnij się, że strona otwarta jest na serwerze z obsługą PHP, a nie bezpośrednio z pliku.</p>';
-                        })
-                        .finally(() => {
-                            submitBtn.disabled = false;
-                            submitBtn.innerText = originalBtnText;
-                        });
-                });
-            }
-
-            // --- Lead Recovery System (15 minute timer) ---
-            const LEAD_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
-            const SESSION_KEY = 'fuego_lead_recovered';
-
-            // Check if we already recovered this lead in this session
-            if (!sessionStorage.getItem(SESSION_KEY)) {
-                console.log('Lead recovery timer started: 15 minutes');
-
-                setTimeout(() => {
-                    triggerLeadRecovery();
-                }, LEAD_TIMEOUT);
-            }
-
-            function triggerLeadRecovery() {
-                // Double check session storage just in case
-                if (sessionStorage.getItem(SESSION_KEY)) return;
-
-                console.log('Triggering lead recovery...');
-
-                fetch('assets/php/lead_recovery.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'action=recover_lead'
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Lead recovery response:', data);
-                        if (data.success) {
-                            // Mark as recovered so we don't send again this session
-                            sessionStorage.setItem(SESSION_KEY, 'true');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Lead recovery error:', error);
-                    });
-            }
-        });
-    </script>
+    <!-- Scripts (Vanilla ES6 Modules) -->
+    <script type="module" src="assets/js/main.js"></script>
+    <script type="module" src="assets/js/contact.js"></script>
 </body>
 
 </html>
-
-<!-- test -p->

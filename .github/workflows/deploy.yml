@@ -1,37 +1,101 @@
-name: Deploy generator to LH
+name: "CI/CD Pipeline & Deployment: FuegoLingua.pl"
 
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  test:
+    name: 1. Quality Gate & Testy Jednostkowe
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 1.1 Pobranie kodu repozytorium
         uses: actions/checkout@v4
 
-      - name: Upload via SFTP
+      - name: 1.2 Sprawdzenie pliku wejściowego (index.html)
+        run: |
+          if [ ! -f index.html ]; then
+            echo "❌ Brak pliku wejściowego index.html!"
+            exit 1
+          fi
+
+      - name: 1.3 Ochrona przed wyciekiem danych i sekretów
+        run: |
+          if git ls-files | grep -E "(\.env|config/secrets\.php|\.htpasswd|leads_.*\.csv)$"; then
+            echo "❌ Wykryto plik z wrażliwymi danymi w repozytorium!"
+            exit 1
+          fi
+
+      - name: 1.4 Walidacja składni PHP (jeśli występują pliki PHP)
+        run: |
+          if find . -type f -name "*.php" | grep -q .; then
+            echo "Sprawdzanie składni plików PHP..."
+            find . -type f -name "*.php" -print0 | xargs -0 -n1 php -l
+          else
+            echo "Brak plików PHP, pomijanie walidacji PHP."
+          fi
+
+      - name: 1.5 Konfiguracja środowiska Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 1.6 Sprawdzenie poprawności syntaktycznej JavaScript
+        run: npm run check:syntax
+
+      - name: 1.7 Uruchomienie testów jednostkowych i raportu pokrycia (Coverage)
+        run: npm run test:coverage
+
+  audit:
+    name: 2. Audyt jakościowy Lighthouse CI
+    needs: [test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 2.1 Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: 2.2 Konfiguracja środowiska Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 2.3 Audyt jakościowy Lighthouse CI (a11y, SEO, Best Practices)
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configPath: './.lighthouserc.json'
+
+  deploy:
+    name: 3. Wdrożenie na serwer produkcyjny (LH)
+    needs: [test, audit]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 3.1 Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: 3.2 Oczyszczenie zbędnych plików deweloperskich przed wysłaniem na serwer
+        run: |
+          rm -rf .git .github tests scripts .lighthouserc.json package*.json
+
+      - name: 3.3 Wdrożenie plików przez SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server: ${{ secrets.FTP_SERVER }}
-          port: 40022
+          port: ${{ secrets.FTP_PORT || 40022 }}
           local_path: './*'
-          # Ścieżka na LH dla SFTP zazwyczaj zaczyna się od /home/...
           remote_path: '/home/platne/serwer417204/public_html/fuegolingua.pl'
           sftp_args: '-o ConnectTimeout=60'
-
-
-
-
-
-          
-          # local-dir: ./
-          # server-dir: "/home/platne/serwer417204/public_html/dancepuls.katosalsahub.pl/"
-          # exclude: |
-          #   **/.git*
-          #   **/.github/**
-          #   **/node_modules/**

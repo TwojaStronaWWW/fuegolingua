@@ -1,0 +1,40 @@
+name: 🚀 Nowe Zadanie / Funkcjonalność (Task / Feature)
+description: Zaproponuj nowe ulepszenie, moduł lub optymalizację w FuegoLingua
+title: "[TASK] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Opisz cel zadania oraz korzyści biznesowe dla FuegoLingua.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Obszar zadania
+      options:
+        - "Interfejs UI / Stylizacja CSS / Hero"
+        - "Logika JS / Interakcje użytkownika"
+        - "Cennik / Prezentacja oferty"
+        - "Backend / Bezpieczeństwo formularzy"
+        - "Testy jednostkowe & Brama Jakości"
+        - "Infrastruktura & CI/CD"
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Uzasadnienie i cel biznesowy
+      placeholder: Dlaczego ta zmiana jest potrzebna i jak wpłynie na klientów lub konwersję?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Kryteria akceptacji (Definition of Done)
+      value: |
+        - [ ] Zgodność z design systemem FuegoLingua
+        - [ ] Pokrycie testami jednostkowymi (>= 90%)
+        - [ ] Brak regresji wydajnościowej (Lighthouse 90+)
+        - [ ] npm run check przechodzi w 100%
+    validations:
+      required: true

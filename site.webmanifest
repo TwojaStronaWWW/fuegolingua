@@ -1,0 +1,16 @@
+{
+  "name": "Fuego Lingua - Hiszpański z Pasją",
+  "short_name": "FuegoLingua",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d9381e",
+  "description": "Indywidualne lekcje, konwersacje i kursy języka hiszpańskiego online.",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

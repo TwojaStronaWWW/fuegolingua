@@ -11,6 +11,11 @@
         content="hiszpański cennik, kursy hiszpańskiego cena, hiszpański w biznesie, hiszpański stolarka, fuego lingua cennik">
     <meta name="author" content="Fuego Lingua">
 
+    <!-- SEO & Metadata -->
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://fuegolingua.pl/cennik.html">
+    <link rel="manifest" href="site.webmanifest">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fuegolingua.pl/cennik.html">
@@ -19,7 +24,24 @@
     <meta property="og:image" content="assets/images/logohero.png">
 
     <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <link rel="icon" type="image/png" href="assets/images/logofoto.png">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Course",
+      "name": "Kursy Języka Hiszpańskiego Fuego Lingua",
+      "description": "Lekcje hiszpańskiego online dopasowane do indywidualnych potrzeb kursanta: od podstaw A1 po hiszpański biznesowy.",
+      "provider": {
+        "@type": "EducationalOrganization",
+        "name": "Fuego Lingua",
+        "sameAs": "https://fuegolingua.pl/"
+      }
+    }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -363,47 +385,7 @@
         <p>&copy; 2026 Fuego Lingua. Wszystkie prawa zastrzeżone.</p>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Mobile Navigation
-            const hamburger = document.querySelector('.hamburger');
-            const navLinks = document.querySelector('.nav-links');
-            if (hamburger) {
-                hamburger.addEventListener('click', () => {
-                    navLinks.classList.toggle('active');
-                });
-            }
-
-            // Tabs Logic
-            const tabs = document.querySelectorAll('.pricing-tab');
-            const contents = document.querySelectorAll('.pricing-content');
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    // Remove active from all tabs
-                    tabs.forEach(t => t.classList.remove('active'));
-                    // Add active to clicked tab
-                    tab.classList.add('active');
-
-                    // Hide all contents
-                    contents.forEach(c => {
-                        c.style.display = 'none';
-                        c.classList.remove('active');
-                    });
-
-                    // Show target content
-                    const targetId = tab.getAttribute('data-target');
-                    const targetContent = document.getElementById(targetId);
-                    if (targetContent) {
-                        targetContent.style.display = 'block';
-                        // small delay to allow display block to apply before animating opacity
-                        setTimeout(() => {
-                            targetContent.classList.add('active');
-                        }, 10);
-                    }
-                });
-            });
-        });
-    </script>
+    <!-- Scripts (Vanilla ES6 Modules) -->
+    <script type="module" src="assets/js/main.js"></script>
 </body>
 </html>
