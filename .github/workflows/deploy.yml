@@ -99,3 +99,15 @@ jobs:
           local_path: './*'
           remote_path: '/home/platne/serwer417204/public_html/fuegolingua.pl'
           sftp_args: '-o ConnectTimeout=60'
+
+      - name: 3.4 Czyszczenie pamięci podręcznej Cloudflare (opcjonalnie)
+        if: env.CF_ZONE != '' && env.CF_TOKEN != ''
+        env:
+          CF_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+        run: |
+          echo "Wysyłanie żądania Purge Cache do API Cloudflare..."
+          curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/purge_cache" \
+            -H "Authorization: Bearer $CF_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'

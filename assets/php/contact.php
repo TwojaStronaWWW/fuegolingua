@@ -35,7 +35,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
-    // 4. Treść wiadomości e-mail
+    // 4. Treść wiadomości e-mail (z uwzględnieniem proxy Cloudflare)
+    $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? 'Nieznane IP';
     $email_content = "Nowe zgłoszenie ze strony Fuego Lingua:\n\n";
     $email_content .= "Imię: $name\n";
     $email_content .= "Email: $email\n";
@@ -43,6 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email_content .= "Cel nauki: $purpose\n\n";
     $email_content .= "Wiadomość:\n$message\n";
     $email_content .= "\n---\nData zgłoszenia: " . date("Y-m-d H:i:s") . "\n";
+    $email_content .= "Adres IP: " . htmlspecialchars($clientIp, ENT_QUOTES, 'UTF-8') . "\n";
 
     // 5. Bezpieczne nagłówki e-mail
     $clean_name = str_replace(["\r", "\n"], '', $name);
