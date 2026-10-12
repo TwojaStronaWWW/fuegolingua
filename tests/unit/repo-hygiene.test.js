@@ -50,12 +50,15 @@ describe('Higiena repozytorium i bezpieczeństwo danych (ISO 27001)', () => {
     scanDir(ROOT_DIR);
   });
 
-  it('pliki dokumentacji i standardów AGENTS.md, GEMINI.md, README.md, ROADMAP.md oraz BLUEPRINT.md istnieją', () => {
+  it('pliki dokumentacji i standardów AGENTS.md, GEMINI.md, README.md, ROADMAP.md, BLUEPRINT.md, SECURITY.md, LICENSE oraz .editorconfig istnieją', () => {
     assert.ok(fs.existsSync(path.join(ROOT_DIR, 'AGENTS.md')), 'Brak AGENTS.md');
     assert.ok(fs.existsSync(path.join(ROOT_DIR, 'GEMINI.md')), 'Brak GEMINI.md');
     assert.ok(fs.existsSync(path.join(ROOT_DIR, 'README.md')), 'Brak README.md');
     assert.ok(fs.existsSync(path.join(ROOT_DIR, 'ROADMAP.md')), 'Brak ROADMAP.md');
     assert.ok(fs.existsSync(path.join(ROOT_DIR, 'BLUEPRINT.md')), 'Brak BLUEPRINT.md');
+    assert.ok(fs.existsSync(path.join(ROOT_DIR, 'SECURITY.md')), 'Brak SECURITY.md');
+    assert.ok(fs.existsSync(path.join(ROOT_DIR, 'LICENSE')), 'Brak LICENSE');
+    assert.ok(fs.existsSync(path.join(ROOT_DIR, '.editorconfig')), 'Brak .editorconfig');
     assert.ok(fs.existsSync(path.join(ROOT_DIR, '.github', 'pull_request_template.md')), 'Brak .github/pull_request_template.md');
   });
 
