@@ -194,5 +194,20 @@ Dla serwisów firmowych wymagających obsługi formularza kontaktowego bez relac
    - W `.gitignore` reguły: `api/sessions/*`, `api/rate_limits/*.json`, `api/leads_*.csv` oraz `*.log`.
 
 ---
+
+### Krok 10: Standard konfiguracji Cloudflare & automatyczny Purge Cache (CDN / DNS)
+Dla wszystkich witryn publikowanych w ekosystemie TwojaStronaWWW korzystających z Cloudflare (jak `fuegolingua.pl`):
+1. **Wzorzec parametrów DNS i SSL/TLS:**
+   - Pełna specyfikacja parametrów znajduje się w dedykowanym dokumencie: [`docs/CLOUDFLARE_STANDARDS.md`](docs/CLOUDFLARE_STANDARDS.md).
+   - SSL/TLS Encryption Mode: **Full** (lub Full Strict) — zakaz Flexible.
+   - Always Use HTTPS: **ON**, Min TLS Version: **1.2**, TLS 1.3: **ON**, HTTP/3 (QUIC): **ON**.
+   - Speed Brain: **ON**, Rocket Loader: **OFF** (dla stabilności czystego Vanilla JS).
+2. **Automatyczny Purge Cache w CI/CD:**
+   - Dodaj w GitHub Secrets: `CLOUDFLARE_ZONE` oraz `CLOUDFLARE_TOKEN`.
+   - Potok `deploy.yml` / `deploy-production.yml` automatycznie odświeży pamięć podręczną krawędzi Cloudflare zaraz po przesłaniu plików na serwer LH.
+3. **Prawidłowy odczyt IP w PHP:**
+   - Używaj `$clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'];`
+
+---
 *Dokumentacja przygotowana dla ekosystemu TwojaStronaWWW.*
 
