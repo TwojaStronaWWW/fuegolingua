@@ -11,6 +11,7 @@ config/secrets.php
 # Testing & Coverage
 coverage/
 .nyc_output/
+dist/
 
 # API Sessions, Limits & CRM Leads (Zero Data Leakage)
 api/sessions/*

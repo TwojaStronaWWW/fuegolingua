@@ -137,3 +137,53 @@ $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? 'Nie
 $clientCountry = $_SERVER['HTTP_CF_IPCOUNTRY'] ?? 'PL';
 ```
 Standard ten jest w 100% zaimplementowany w FuegoLingua.
+
+---
+
+## 📦 5. DOMYŚLNY STANDARD ARCHITEKTURY MEDIÓW: CLOUDFLARE R2 OBJECT STORAGE (ZERO-BLOAT MEDIA ARCHITECTURE)
+
+W platformie **TwojaStronaWWW** obowiązuje bezwzględny standard **Zero-Bloat Media**:
+Repozytorium Git służy wyłącznie do wersjonowania kodu źródłowego (HTML, CSS, JS, lekkie SVG, PHP, testy). **Zakazuje się trzymania w repozytorium ciężkich plików multimedialnych** (duże zdjęcia JPG/PNG, pliki wideo, załączniki PDF).
+
+### 5.1 Dlaczego Cloudflare R2?
+1. **0 zł opłat egress (No Egress Fees):** W przeciwieństwie do Amazon S3 czy Google Cloud Storage, transfer wychodzący danych z Cloudflare R2 jest całkowicie bezpłatny.
+2. **Darmowy pakiet bazowy:** Do 10 GB przestrzeni dyskowej oraz miliony operacji miesięcznie bez żadnych kosztów.
+3. **Ekspresowy CDN brzegowy:** Integracja z siecią Anycast w ponad 300 miastach na świecie (serwowanie bezpośrednio z węzła Warszawa `WAW`).
+4. **Czyste repozytorium Git:** Klonowanie repozytorium trwa ułamek sekundy, a proces CI/CD nie przesyła megabajtów przez SFTP.
+
+### 5.2 Struktura Adresacji Mediów
+Dla każdej witryny uruchamiana jest dedykowana subdomena mediów:
+- Główna domena witryny: `https://twojadomena.pl`
+- Domena mediów i zdjęć: `https://media.twojadomena.pl/`
+
+Przykład w kodzie HTML:
+```html
+<!-- Domyślny wzorzec ładowania zdjęć w TwojaStronaWWW -->
+<img src="https://media.twojadomena.pl/kobieta2.webp" alt="Opis zdjęcia" fetchpriority="high">
+```
+
+### 5.3 Konfiguracja w Cloudflare Dashboard (Krok po Kroku)
+1. **Utworzenie Bucket:**
+   - W menu bocznym Cloudflare przejdź do **R2** ➔ **Create bucket**.
+   - Nazwa bucketu: `<nazwa-projektu>-media` (np. `fuegolingua-media` lub `raricart-media`).
+   - Lokalizacja (Location): `Automatic` lub `WESP (Western Europe)`.
+2. **Podpięcie Custom Domain (Subdomeny):**
+   - W widoku bucketu przejdź do zakładki **Settings** ➔ sekcja **Custom Domains**.
+   - Kliknij **Connect Domain**.
+   - Wpisz: `media.twojadomena.pl` (np. `media.fuegolingua.pl`).
+   - Cloudflare automatycznie utworzy rekord DNS i wygeneruje certyfikat SSL.
+3. **Konfiguracja CORS (Zezwolenie na zasoby):**
+   - W zakładce **Settings** ➔ **CORS Policy** dodaj regułę:
+   ```json
+   [
+     {
+       "AllowedOrigins": ["https://twojadomena.pl", "https://www.twojadomena.pl"],
+       "AllowedMethods": ["GET", "HEAD"],
+       "AllowedHeaders": ["*"],
+       "MaxAgeSeconds": 86400
+     }
+   ]
+   ```
+
+### 5.4 Bezbiblioteczny Klient PHP (`api/R2Client.php`)
+Do obsługi bucketu R2 (upload, usuwanie, synchronizacja z poziomu PHP i CLI) stosujemy wbudowaną klasę `TwojaStronaWWW\Api\R2Client`, która komunikuje się bezpośrednio z API S3 z podpisem kryptograficznym AWS SigV4, bez instalacji ociężałych zewnętrznych bibliotek (`aws-sdk` czy `guzzle`).

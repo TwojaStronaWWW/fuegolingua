@@ -213,6 +213,10 @@ Dla witryn korzystających z ochrony i przyspieszania Cloudflare CDN/Proxy:
      ```php
      $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'];
      ```
+4. **Domyślny standard przechowywania mediów: Cloudflare R2 (Zero-Bloat Media):**
+   - Repozytorium Git służy wyłącznie do wersjonowania kodu (zakaz trzymania wielomegabajtowych plików graficznych i wideo w Git).
+   - Zdjęcia i pliki multimedialne przechowywane są w dedykowanym zasobniku Cloudflare R2 (`<projekt>-media`) i serwowane z subdomeny `https://media.twojadomena.pl/`.
+   - Do komunikacji z bucketem służy natywny, bezbiblioteczny klient `api/R2Client.php` (AWS SigV4).
 
 ---
 *Dokumentacja inżynieryjna platformy TwojaStronaWWW.*

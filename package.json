@@ -13,7 +13,8 @@
     "prepare": "git config core.hooksPath .githooks || true",
     "audit:lighthouse": "lhci autorun",
     "serve": "node scripts/serve.js",
-    "dev": "node scripts/serve.js"
+    "dev": "node scripts/serve.js",
+    "media:r2": "php scripts/migrate-to-r2.php"
   },
   "devDependencies": {
     "@lhci/cli": "^0.14.0"

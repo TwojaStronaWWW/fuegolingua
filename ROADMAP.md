@@ -37,9 +37,9 @@ Wszystkie zadania są synchronizowane ze standardem **Conventional Commits** i G
 - [ ] **#5: [SEO] Weryfikacja danych strukturalnych Schema.org**
   - *Priorytet:* `MEDIUM` | *Etykiety:* `seo`
   - *Opis:* Implementacja Schema.org `EducationalOrganization` i `Course` na podstronach.
-- [ ] **#6: [PERF] Optymalizacja kompresji obrazów WebP**
-  - *Priorytet:* `MEDIUM` | *Etykiety:* `performance`
-  - *Opis:* Konwersja pozostałych ciężkich grafik PNG do formatu WebP.
+- [ ] **#6: [PERF] Wdrożenie Cloudflare R2 Media & Optymalizacja WebP**
+  - *Priorytet:* `HIGH` | *Etykiety:* `performance`, `cloudflare`, `r2`
+  - *Opis:* Konwersja grafik do WebP, przygotowanie paczki mediów R2 i podpięcie subdomeny `media.fuegolingua.pl`.
 - [ ] **#7: [A11Y] Audyt kontrastu i dostępności WCAG 2.1 AA**
   - *Priorytet:* `MEDIUM` | *Etykiety:* `accessibility`
   - *Opis:* Eliminacja ostrzeżeń kontrastu na kartach poziomów językowych.
