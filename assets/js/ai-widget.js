@@ -117,7 +117,11 @@ export function getLocalFallbackAnswer(question) {
     return 'Skontaktuj się ze mną wygodnie:\n- E-mail: kontakt@fuegolingua.pl\n- Telefon: **796-868-967**\n- Instagram: **@fuegolingua_sin_limites**\nMożesz też wypełnić formularz kontaktowy na dole strony głównej!';
   }
 
-  return 'W **Fuego Lingua** uczymy żywego języka hiszpańskiego online (poziomy **A1–C2**, przygotowanie do **DELE/matury** oraz kursy specjalistyczne: **Biznes, Budownictwo, Turystyka**).\n- Lekcje 1:1 już od **95 zł / 60 min** (w grupie od **75 zł/os.**)\n- Pierwsza konsultacja wstępna jest **bezpłatna**!\nNapisz na kontakt@fuegolingua.pl lub zadzwoń pod **796-868-967**.';
+  if (q.includes('tłumacz') || q.includes('tlumacz') || q.includes('delegacj') || q.includes('przysięgł') || q.includes('przysiegl')) {
+    return 'Główna działalność Fuego Lingua to **nauka hiszpańskiego**, a tłumaczenia nie są standardową usługą. Prowadząca jest w trakcie uzyskiwania uprawnień tłumacza przysięgłego, więc **na dziś nie wykonuje tłumaczeń przysięgłych**.\nW sprawie wyjazdu lub delegacji napisz na kontakt@fuegolingua.pl albo zadzwoń: **796-868-967**. Opisz termin i rodzaj zadania, a dostaniesz indywidualną odpowiedź.';
+  }
+
+  return 'Z tym pytaniem najlepiej napisać bezpośrednio do prowadzącej. Odpowie indywidualnie:\n- E-mail: kontakt@fuegolingua.pl\n- Telefon: **796-868-967**\nJeśli chcesz, mogę za to powiedzieć o cenach, formach zajęć albo bezpłatnej konsultacji w Fuego Lingua.';
 }
 
 /**
