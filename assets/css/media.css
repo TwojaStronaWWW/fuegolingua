@@ -26,9 +26,9 @@
 	}
 
 	.orbit-container::before {
-		top: 190px;
-		width: 360px;
-		height: 360px;
+		top: 230px;
+		width: 440px;
+		height: 440px;
 	}
 
 	.orbit-center {
@@ -37,9 +37,9 @@
 		top: auto;
 		transform: none;
 		animation: none;
-		width: min(100%, 460px);
-		max-height: 380px;
-		margin: 0 auto;
+		width: min(100%, 640px);
+		max-height: 500px;
+		margin: -30px auto -20px;
 	}
 
 	.orbit-ring {
@@ -155,9 +155,9 @@
 	}
 
 	.orbit-container::before {
-		top: 150px;
-		width: 280px;
-		height: 280px;
+		top: 175px;
+		width: 340px;
+		height: 340px;
 	}
 
 	.orbit-center {
@@ -165,13 +165,13 @@
 		left: auto;
 		top: auto;
 		transform: none;
-		width: 100%;
-		max-width: 360px;
-		max-height: 320px;
+		width: 115%;
+		max-width: 480px;
+		max-height: 400px;
 		object-fit: contain;
 		animation: none;
 		z-index: 2;
-		margin: 0 auto;
+		margin: -20px auto -15px;
 	}
 
 	.orbit-ring {
