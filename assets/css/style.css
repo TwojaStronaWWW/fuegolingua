@@ -410,220 +410,241 @@ h3 {
 	border-radius: 50%;
 }
 
-/* --- Offer Section (3D Orbit) --- */
+/* --- Offer Section (Halo Arc Showcase around Central Figure) --- */
 .offer-section {
-	background: oklch(100% 0 0);
+	background:
+		radial-gradient(circle at 50% 52%, oklch(94% 0.05 65 / 70%) 0%, oklch(100% 0 0) 65%);
 	position: relative;
 	border-top: 4px solid var(--fuego-orange);
 	border-bottom: 4px solid var(--fuego-red);
-	overflow: hidden; /* Prevent 3D elements from expanding scroll */
+	overflow: hidden;
 }
 
-/* 3D Orbit Container */
+/* Halo Arc Container: 4 cards left + Central Woman + 4 cards right */
 .orbit-container {
 	position: relative;
 	width: 100%;
-	height: 800px;
+	min-height: 680px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	perspective: 1200px; /* Perspective for the 3D effect */
-	transform-style: preserve-3d; /* Force children to share 3D space */
-	margin: 4rem 0;
-	contain: layout paint style; /* Optimization */
+	margin: 2rem 0 1rem;
+	contain: layout style;
 }
 
-/* Pause 3D Orbit animations when outside viewport or when hovering */
-.orbit-container:not(.is-visible) .orbit-center,
-.orbit-container:not(.is-visible) .orbit-ring,
-.orbit-container:not(.is-visible) .offer-card-orbit,
-.orbit-ring:hover,
-.orbit-ring:hover .offer-card-orbit {
+/* Subtle warm Spanish sun/halo aura behind the central figure */
+.orbit-container::before {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 520px;
+	height: 520px;
+	border-radius: 50%;
+	background: radial-gradient(
+		circle,
+		oklch(75% 0.19 55 / 26%) 0%,
+		oklch(58% 0.22 35 / 12%) 52%,
+		transparent 74%
+	);
+	border: 1px dashed oklch(70% 0.2 50 / 25%);
+	pointer-events: none;
+	z-index: 1;
+}
+
+/* Pause subtle center float when outside viewport */
+.orbit-container:not(.is-visible) .orbit-center {
 	animation-play-state: paused;
 }
 
-/* Center Image (The Axis) */
+/* Center Image (100% visible in the middle stage, never covered by cards) */
 .orbit-center {
 	position: absolute;
-	height: 1000px; /* Made her even taller to dominate the 300px cards */
-	width: auto;
-	/* Translate Y to push her upwards so she towers over the orbit */
+	left: 50%;
+	top: 50%;
+	transform: translate3d(-50%, -50%, 0);
+	width: clamp(400px, 40vw, 560px);
+	max-height: 640px;
+	height: auto;
+	object-fit: contain;
 	pointer-events: none;
-	box-shadow: 0 20px 30px oklch(0% 0 0 / 20%); /* Replaced drop-shadow */
 	animation: floatCenter 6s ease-in-out infinite;
 	will-change: transform;
-	z-index: 2; /* Ensure she pops over the back elements */
+	z-index: 2;
 }
 
 @keyframes floatCenter {
-	/* Baseline lowered and animation changed to a subtle breathing pulse */
 	0%,
 	100% {
-		transform: translate3d(0, -60px, 0) scale(1);
+		transform: translate3d(-50%, -50%, 0) scale(1);
 	}
 	50% {
-		transform: translate3d(0, -60px, 0) scale(1.03);
+		transform: translate3d(-50%, calc(-50% - 10px), 0) scale(1.02);
 	}
 }
 
-/* The Rotating Ring */
+/* Symmetrical 2-Column Halo Grid flanking the central figure */
 .orbit-ring {
-	position: absolute;
-	width: 400px;
-	height: 400px;
-	transform-style: preserve-3d;
-	animation: orbitSpin 35s linear infinite;
-	will-change: transform;
-	/* Push the ring down so it spins lower around the dancer's waist/legs */
-	margin-top: 150px;
+	position: relative;
+	width: 100%;
+	display: grid;
+	grid-template-columns: minmax(290px, 380px) minmax(290px, 380px);
+	justify-content: space-between;
+	align-items: stretch;
+	gap: 1.35rem 2rem;
+	margin: 0;
+	z-index: 3;
 }
 
-/* Orbit Spin Animation for the entire ring */
-@keyframes orbitSpin {
-	0% {
-		transform: rotateY(0deg);
-	}
-	100% {
-		transform: rotateY(360deg);
-	}
-}
-
-/* Individual Orbit Items */
+/* Individual Halo Items arranged in an inward-curving arc around the figure */
 .orbit-item {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 300px; /* Made wider to accommodate text */
-	height: 300px;
-	transform: translate(-50%, -50%) rotateY(calc(var(--i) * 45deg)) translateZ(450px);
-	transform-style: preserve-3d;
+	position: relative;
+	width: 100%;
+	height: auto;
+	transition: transform 0.35s ease;
 }
 
-/* Flame Card (Inside the Orbit Item) */
+/* Top & bottom pairs curve inward toward the figure's head and feet */
+.orbit-item:nth-child(1),
+.orbit-item:nth-child(7) {
+	transform: translateX(42px);
+}
+
+.orbit-item:nth-child(2),
+.orbit-item:nth-child(8) {
+	transform: translateX(-42px);
+}
+
+/* Middle pairs open outward around the dancer's outstretched silhouette */
+.orbit-item:nth-child(3),
+.orbit-item:nth-child(5) {
+	transform: translateX(-6px);
+}
+
+.orbit-item:nth-child(4),
+.orbit-item:nth-child(6) {
+	transform: translateX(6px);
+}
+
+/* Fiery Capsule Card (All 8 visible and legible simultaneously) */
 .offer-card-orbit {
-	/* Glowing Fire Sphere Shape */
 	width: 100%;
 	height: 100%;
-	border-radius: 50%;
-	background: radial-gradient(
-		circle at 50% 90%,
-		oklch(60% 0.22 40 / 95%) 0%,
-		/* Bright orange fire core */ oklch(35% 0.2 30 / 90%) 45%,
-		/* Deep fiery red */ oklch(15% 0.05 20 / 90%) 80% /* Very dark, smoky edge */
+	border-radius: 22px;
+	background: linear-gradient(
+		135deg,
+		oklch(28% 0.14 28 / 96%) 0%,
+		oklch(20% 0.08 24 / 98%) 100%
 	);
 	box-shadow:
-		inset 0 -15px 40px oklch(75% 0.22 40 / 60%),
-		inset 0 10px 20px oklch(0% 0 0 / 60%),
-		0 15px 35px oklch(0% 0 0 / 50%),
-		0 0 20px oklch(60% 0.22 40 / 30%);
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	padding: 0;
-	text-align: center;
-	border: 1px solid oklch(80% 0.15 60 / 15%);
+		inset 0 1px 0 oklch(85% 0.15 65 / 25%),
+		0 12px 28px oklch(20% 0.05 30 / 18%);
+	padding: 1.15rem 1.35rem;
+	border: 1px solid oklch(70% 0.18 50 / 30%);
 	position: relative;
 	overflow: hidden;
 	transition:
-		box-shadow 0.4s ease-out,
-		border-color 0.4s ease-out; /* Smooth hover transition to fix jitter/flashing */
-	animation: counterSpin 35s linear infinite;
-	transform: rotateY(calc(var(--i) * -45deg));
-	will-change: transform;
-	backface-visibility: hidden;
+		transform 0.3s ease,
+		box-shadow 0.3s ease,
+		border-color 0.3s ease;
 
-	/* Text styling tailored for visual hierarchy */
 	h3 {
-		font-family: var(--font-secondary);
-		color: oklch(98% 0.05 60);
-		font-size: 1.25rem;
-		text-shadow:
-			1px 1px 4px oklch(0% 0 0 / 80%),
-			0 0 15px oklch(0% 0 0 / 60%);
+		font-family: var(--font-heading);
+		color: oklch(98% 0.03 70);
+		font-size: 1.08rem;
 		font-weight: 700;
 		line-height: 1.25;
-		margin: 0 0 0.5rem 0;
-		letter-spacing: 0.5px;
-		text-wrap: balance;
+		margin: 0;
+		letter-spacing: 0.2px;
 		position: relative;
 		z-index: 2;
 	}
 
-	/* New descriptive text */
 	.offer-desc {
-		color: oklch(92% 0.02 60);
-		font-size: 0.95rem;
-		line-height: 1.4;
+		color: oklch(90% 0.02 65);
+		font-size: 0.88rem;
+		line-height: 1.45;
 		margin: 0;
-		font-weight: 500;
-		text-shadow: 1px 1px 3px oklch(0% 0 0 / 90%);
+		font-weight: 400;
 		opacity: 0.95;
 		position: relative;
 		z-index: 2;
 	}
 
-	/* Static GPU-friendly inner flame glow (no blur filter or blend-mode inside 3D context) */
+	/* Warm subtle glow in the corner of each card */
 	&::before {
 		content: '';
 		position: absolute;
-		bottom: -15%;
-		left: -15%;
-		width: 130%;
-		height: 130%;
-		background:
-			radial-gradient(ellipse at 50% 100%, oklch(85% 0.2 70 / 35%) 0%, transparent 65%),
-			radial-gradient(ellipse at 30% 80%, oklch(70% 0.22 40 / 25%) 0%, transparent 55%),
-			radial-gradient(ellipse at 70% 80%, oklch(70% 0.22 40 / 25%) 0%, transparent 55%);
+		top: -30%;
+		left: -10%;
+		width: 140px;
+		height: 140px;
+		background: radial-gradient(
+			circle,
+			oklch(70% 0.22 45 / 28%) 0%,
+			transparent 70%
+		);
 		pointer-events: none;
 		z-index: 0;
 	}
 
 	&:hover {
+		transform: translateY(-4px);
 		border-color: var(--fuego-gold);
 		box-shadow:
-			inset 0 -15px 40px oklch(75% 0.22 40 / 70%),
-			inset 0 10px 20px oklch(0% 0 0 / 60%),
-			0 25px 50px oklch(0% 0 0 / 60%),
-			0 0 40px oklch(70% 0.22 50 / 50%);
+			inset 0 1px 0 oklch(90% 0.18 75 / 40%),
+			0 18px 36px oklch(45% 0.2 30 / 28%),
+			0 0 20px oklch(70% 0.2 50 / 25%);
+
 		.offer-icon {
-			transform: scale(1.15) translateY(-5px);
+			transform: scale(1.1) rotate(-4deg);
+			box-shadow: 0 0 18px oklch(75% 0.22 55 / 60%);
 		}
 	}
 }
 
-/* Counter-spin animation to keep cards facing forward */
-@keyframes counterSpin {
-	0% {
-		transform: rotateY(calc(var(--i) * -45deg)) rotateY(0deg);
-	}
-	100% {
-		transform: rotateY(calc(var(--i) * -45deg)) rotateY(-360deg);
-	}
-}
-
-/* Ensure ALL content inside flame stays upright and centered vertically */
+/* Grid layout inside each card: Fire-Orb Icon Badge on the left, text on the right */
 .offer-content {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: 54px 1fr;
+	grid-template-rows: auto auto;
+	column-gap: 1rem;
+	row-gap: 0.3rem;
 	align-items: center;
-	justify-content: center; /* Center precisely in the bulb */
-	width: 210px; /* Safe width inscribed inside a 300px circle */
-	height: 100%;
-	padding: 0;
+	width: 100%;
+	text-align: left;
 	z-index: 1;
 	position: relative;
 }
 
-/* Icons scaled down to give priority to text */
+/* Glowing Fire-Orb Icon Badge */
 .offer-icon {
-	font-size: 2.5rem;
-	color: oklch(85% 0.18 80); /* Bright fire color */
-	margin-bottom: 0.5rem;
-	transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+	grid-column: 1;
+	grid-row: 1 / span 2;
+	width: 54px;
+	height: 54px;
+	line-height: 54px;
+	text-align: center;
+	border-radius: 50%;
+	font-size: 1.75rem;
+	color: oklch(95% 0.12 80);
+	background: radial-gradient(
+		circle at 50% 85%,
+		oklch(68% 0.22 45) 0%,
+		oklch(45% 0.22 30) 65%,
+		oklch(28% 0.12 25) 100%
+	);
+	box-shadow:
+		inset 0 -6px 12px oklch(80% 0.2 60 / 50%),
+		0 6px 14px oklch(0% 0 0 / 35%);
+	border: 1px solid oklch(85% 0.18 70 / 35%);
+	margin: 0;
+	transition:
+		transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+		box-shadow 0.35s ease;
 	position: relative;
 	z-index: 2;
-	text-shadow: 0 2px 5px oklch(0% 0 0 / 60%);
 }
 /* End Offer Section */
 
