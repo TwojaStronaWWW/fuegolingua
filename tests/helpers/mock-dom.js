@@ -36,10 +36,42 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
       this._listeners = new Map();
       this.style = {};
       this.textContent = '';
-      this.innerHTML = '';
+      this._innerHTML = '';
       this.children = [];
       this.value = '';
       this.disabled = false;
+      this.scrollTop = 0;
+      this.scrollHeight = 100;
+      this.parentNode = null;
+    }
+
+    get innerHTML() {
+      return this._innerHTML;
+    }
+
+    set innerHTML(val) {
+      this._innerHTML = String(val || '');
+      if (this._innerHTML === '') {
+        this.children = [];
+        return;
+      }
+      const tagRegex = /<([a-zA-Z0-9]+)\b([^>]*)>/g;
+      let match;
+      while ((match = tagRegex.exec(this._innerHTML)) !== null) {
+        const [, tag, attrs] = match;
+        const idMatch = attrs.match(/\bid=["']([^"']+)["']/);
+        const classMatch = attrs.match(/\bclass=["']([^"']+)["']/);
+        if (idMatch) {
+          const child = new MockElement(tag, idMatch[1], classMatch ? classMatch[1] : '');
+          const ariaExpanded = attrs.match(/\baria-expanded=["']([^"']+)["']/);
+          if (ariaExpanded) child.setAttribute('aria-expanded', ariaExpanded[1]);
+          const ariaLabel = attrs.match(/\baria-label=["']([^"']+)["']/);
+          if (ariaLabel) child.setAttribute('aria-label', ariaLabel[1]);
+          child.parentNode = this;
+          this.children.push(child);
+          elements.set(child.id, child);
+        }
+      }
     }
 
     get className() {
@@ -50,10 +82,28 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
       this._classes = new Set(val ? String(val).split(' ').filter(Boolean) : []);
     }
 
+    appendChild(child) {
+      if (!child) return null;
+      child.parentNode = this;
+      this.children.push(child);
+      if (child.id) elements.set(child.id, child);
+      return child;
+    }
+
+    remove() {
+      if (this.parentNode && Array.isArray(this.parentNode.children)) {
+        this.parentNode.children = this.parentNode.children.filter(c => c !== this);
+      }
+      if (this.id) elements.delete(this.id);
+    }
+
     setAttribute(k, v) {
       this.attributes.set(k, String(v));
       if (k === 'class') this.className = v;
-      if (k === 'id') this.id = v;
+      if (k === 'id') {
+        this.id = v;
+        elements.set(v, this);
+      }
     }
     getAttribute(k) { return this.attributes.get(k) || null; }
     removeAttribute(k) { this.attributes.delete(k); }
@@ -91,10 +141,11 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
     if (!sel) return false;
     if (sel.startsWith('#')) return el.id === sel.slice(1);
     if (sel.startsWith('.')) return el.classList.contains(sel.slice(1));
-    const attrMatch = sel.match(/^\[([a-zA-Z0-9_-]+)(?:=["']?([^"']*)["']?)?\]$/);
+    const attrMatch = sel.match(/^(?:[a-zA-Z0-9]+)?\[([a-zA-Z0-9_-]+)(?:(\*=|=)["']?([^"'\]]*)["']?)?\]$/);
     if (attrMatch) {
-      const [, attrName, attrVal] = attrMatch;
-      if (attrVal !== undefined) return el.getAttribute(attrName) === attrVal;
+      const [, attrName, op, attrVal] = attrMatch;
+      if (op === '*=') return (el.getAttribute(attrName) || '').includes(attrVal);
+      if (op === '=') return el.getAttribute(attrName) === attrVal;
       return el.hasAttribute(attrName);
     }
     if (/^[a-zA-Z0-9]+$/.test(sel)) return el.tagName.toLowerCase() === sel.toLowerCase();
@@ -114,6 +165,7 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
 
   const mockDocument = {
     readyState: 'complete',
+    head: new MockElement('head'),
     body: new MockElement('body'),
     documentElement: new MockElement('html'),
     getElementById: (id) => elements.get(id) || null,

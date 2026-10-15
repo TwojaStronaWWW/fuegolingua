@@ -56,9 +56,11 @@ describe('Integralność semantyczna i standardy HTML5 (FuegoLingua.pl)', () => 
     assert.match(indexContent, /name=["']website_url["']/i, 'Brak pola honeypot website_url chroniącego przed botami');
   });
 
-  test('Skrypty JS są poprawnie podpięte z zewnętrznych plików, brak martwych komentarzy testowych', () => {
+  test('Skrypty JS oraz Asystent AI (data-site-id="fuegolingua") są poprawnie podpięte, brak martwych komentarzy testowych', () => {
     assert.match(indexContent, /src=["'][^"']*(?:main\.js|script\.js)[^"']*["']/i, 'Brak podpięcia skryptu w index.html');
     assert.match(cennikContent, /src=["'][^"']*(?:main\.js|script\.js)[^"']*["']/i, 'Brak podpięcia skryptu w cennik.html');
+    assert.match(indexContent, /ai-widget\.js[^>]*data-site-id=["']fuegolingua["']/i, 'Brak podpięcia Asystenta AI w index.html');
+    assert.match(cennikContent, /ai-widget\.js[^>]*data-site-id=["']fuegolingua["']/i, 'Brak podpięcia Asystenta AI w cennik.html');
     assert.doesNotMatch(indexContent, /<!-- test -p->/i, 'index.html zawiera śmieciowy komentarz testowy');
   });
 });
