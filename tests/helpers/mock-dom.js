@@ -114,7 +114,7 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
     }
     dispatchEvent(evt) {
       const fns = this._listeners.get(evt.type) || [];
-      fns.forEach(fn => fn(evt));
+      fns.forEach(fn => fn.call(this, evt));
       return true;
     }
     focus() { this._focused = true; }
@@ -141,9 +141,10 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
     if (!sel) return false;
     if (sel.startsWith('#')) return el.id === sel.slice(1);
     if (sel.startsWith('.')) return el.classList.contains(sel.slice(1));
-    const attrMatch = sel.match(/^(?:[a-zA-Z0-9]+)?\[([a-zA-Z0-9_-]+)(?:(\*=|=)["']?([^"'\]]*)["']?)?\]$/);
+    const attrMatch = sel.match(/^(?:[a-zA-Z0-9]+)?\[([a-zA-Z0-9_-]+)(?:(\^=|\*=|=)["']?([^"'\]]*)["']?)?\]$/);
     if (attrMatch) {
       const [, attrName, op, attrVal] = attrMatch;
+      if (op === '^=') return (el.getAttribute(attrName) || '').startsWith(attrVal);
       if (op === '*=') return (el.getAttribute(attrName) || '').includes(attrVal);
       if (op === '=') return el.getAttribute(attrName) === attrVal;
       return el.hasAttribute(attrName);

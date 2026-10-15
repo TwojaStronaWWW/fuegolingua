@@ -63,4 +63,12 @@ describe('Integralność semantyczna i standardy HTML5 (FuegoLingua.pl)', () => 
     assert.match(cennikContent, /ai-widget\.js[^>]*data-site-id=["']fuegolingua["']/i, 'Brak podpięcia Asystenta AI w cennik.html');
     assert.doesNotMatch(indexContent, /<!-- test -p->/i, 'index.html zawiera śmieciowy komentarz testowy');
   });
+
+  test('Optymalizacja pierwszego ładowania: preconnect do CDN, subsetting ikon oraz lazy-loading orbity 3D', () => {
+    for (const [name, content] of [['index.html', indexContent], ['cennik.html', cennikContent]]) {
+      assert.match(content, /<link\s+rel=["']preconnect["']\s+href=["']https:\/\/media\.fuegolingua\.pl["']/i, `Brak preconnect do media.fuegolingua.pl w ${name}`);
+      assert.match(content, /Material\+Symbols\+Rounded[^"']*icon_names=/i, `Brak subsettingu ikon Material Symbols (icon_names) w ${name}`);
+    }
+    assert.match(indexContent, /<img[^>]*kobieta1b\.webp[^>]*loading=["']lazy["']/i, 'Obraz centralny orbity 3D (kobieta1b.webp) musi posiadać loading="lazy"');
+  });
 });

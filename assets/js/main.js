@@ -131,15 +131,29 @@ export function initScrollAnimations(doc = document) {
   const orbitRing = doc.querySelector('.orbit-ring');
   if (!orbitRing) return null;
 
-  const stopOrbitOnScroll = () => {
-    if ((globalThis.window?.scrollY || 0) > 200) {
-      orbitRing.style.animationIterationCount = '2';
-      globalThis.window?.removeEventListener('scroll', stopOrbitOnScroll);
-    }
+  const orbitContainer = doc.querySelector('.orbit-container') || orbitRing.parentNode || orbitRing;
+
+  if (typeof globalThis.IntersectionObserver === 'function') {
+    const observer = new globalThis.IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          orbitContainer.classList?.toggle('is-visible', Boolean(entry.isIntersecting));
+        }
+      },
+      { rootMargin: '100px 0px', threshold: 0.05 }
+    );
+    observer.observe(orbitContainer);
+    return { orbitRing, orbitContainer, observer };
+  }
+
+  const handleScrollVisibility = () => {
+    const scrollY = globalThis.window?.scrollY || 0;
+    const isVisible = scrollY > 150 && scrollY < 1800;
+    orbitContainer.classList?.toggle('is-visible', isVisible);
   };
 
-  globalThis.window?.addEventListener('scroll', stopOrbitOnScroll, { passive: true });
-  return orbitRing;
+  globalThis.window?.addEventListener('scroll', handleScrollVisibility, { passive: true });
+  return { orbitRing, orbitContainer, handleScrollVisibility };
 }
 
 export function initLightbox(doc = document) {

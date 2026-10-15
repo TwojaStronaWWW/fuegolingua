@@ -1,7 +1,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { setupMockDom } from '../helpers/mock-dom.js';
-import { initNavigation, initTabs, initLightbox } from '../../assets/js/main.js';
+import { initNavigation, initTabs, initLightbox, initScrollAnimations, initSmoothScroll } from '../../assets/js/main.js';
 
 describe('Nawigacja i interakcje UI (assets/js/main.js)', () => {
   let dom;
@@ -242,5 +242,73 @@ describe('Nawigacja i interakcje UI (assets/js/main.js)', () => {
     assert.equal(modal.classList.contains('is-open'), false);
     assert.equal(modal.hasAttribute('hidden'), true);
     assert.equal(galleryItem1._focused, true);
+  });
+
+  test('initScrollAnimations wstrzymuje i wznawia animację 3D Orbit na podstawie widoczności (IntersectionObserver / scroll)', () => {
+    const orbitContainer = dom.mockDocument.createElement('div');
+    orbitContainer.className = 'orbit-container';
+
+    const orbitRing = dom.mockDocument.createElement('div');
+    orbitRing.className = 'orbit-ring';
+    orbitContainer.appendChild(orbitRing);
+
+    dom.elements.set('orbit-container', orbitContainer);
+    dom.elements.set('orbit-ring', orbitRing);
+
+    let observerCallback = null;
+    const origIO = globalThis.IntersectionObserver;
+    globalThis.IntersectionObserver = class {
+      constructor(cb) {
+        observerCallback = cb;
+      }
+      observe() {}
+    };
+
+    try {
+      const res = initScrollAnimations(dom.mockDocument);
+      assert.ok(res);
+      assert.equal(orbitContainer.classList.contains('is-visible'), false);
+
+      observerCallback([{ isIntersecting: true }]);
+      assert.equal(orbitContainer.classList.contains('is-visible'), true);
+
+      observerCallback([{ isIntersecting: false }]);
+      assert.equal(orbitContainer.classList.contains('is-visible'), false);
+    } finally {
+      globalThis.IntersectionObserver = origIO;
+    }
+
+    // Fallback bez IntersectionObserver
+    const origIO2 = globalThis.IntersectionObserver;
+    delete globalThis.IntersectionObserver;
+    try {
+      const fallbackRes = initScrollAnimations(dom.mockDocument);
+      assert.ok(fallbackRes.handleScrollVisibility);
+      dom.mockWindow.scrollY = 400;
+      fallbackRes.handleScrollVisibility();
+      assert.equal(orbitContainer.classList.contains('is-visible'), true);
+    } finally {
+      globalThis.IntersectionObserver = origIO2;
+    }
+  });
+
+  test('initSmoothScroll płynnie przewija do sekcji docelowej i zamyka menu mobilne', () => {
+    const link = dom.mockDocument.createElement('a');
+    link.setAttribute('href', '#offer');
+
+    const section = dom.mockDocument.createElement('section');
+    section.id = 'offer';
+    let scrolled = false;
+    section.scrollIntoView = () => { scrolled = true; };
+
+    dom.elements.get('nav-links').classList.add('active');
+    dom.elements.set('anchor-offer', link);
+    dom.elements.set('offer', section);
+
+    const anchors = initSmoothScroll(dom.mockDocument);
+    assert.ok(anchors);
+    link.dispatchEvent({ type: 'click', preventDefault: () => {} });
+    assert.equal(scrolled, true);
+    assert.equal(dom.elements.get('nav-links').classList.contains('active'), false);
   });
 });

@@ -34,9 +34,56 @@ describe('Obsługa formularza i Lead Recovery (assets/js/contact.js)', () => {
     assert.equal(typeof res.submitHandler, 'function');
   });
 
-  test('initLeadRecovery nie inicjalizuje timera jeśli lead został już odzyskany w danej sesji', () => {
+  test('initLeadRecovery nie inicjalizuje timera jeśli lead został już odzyskany w danej sesji', async () => {
     dom.mockWindow.sessionStorage.setItem('fuego_lead_recovered', 'true');
     const res = initLeadRecovery(dom.mockWindow, dom.mockDocument);
     assert.ok(res);
+    await res.triggerLeadRecovery();
+  });
+
+  test('submitHandler blokuje wysyłkę przy wypełnionym polu honeypot i obsługuje wysyłkę fetch', async () => {
+    const form = dom.mockDocument.createElement('form');
+    form.id = 'contactForm';
+    const status = dom.mockDocument.createElement('div');
+    status.id = 'formStatus';
+    const submitBtn = dom.mockDocument.createElement('button');
+    submitBtn.setAttribute('type', 'submit');
+    submitBtn.innerText = 'Wyślij';
+    form.appendChild(submitBtn);
+
+    dom.elements.set('contactForm', form);
+    dom.elements.set('formStatus', status);
+
+    const origFormData = globalThis.FormData;
+    const origFetch = globalThis.fetch;
+    let honeypotValue = 'https://spam.bot';
+
+    globalThis.FormData = class {
+      get(key) {
+        return key === 'website_url' ? honeypotValue : 'test';
+      }
+    };
+
+    try {
+      const res = initContactForm(dom.mockDocument);
+      await res.submitHandler({ preventDefault: () => {} });
+      assert.match(status.innerHTML, /Gracias/i);
+
+      honeypotValue = '';
+      globalThis.fetch = async () => ({
+        json: async () => ({ success: true, message: 'Wysłano pomyślnie' })
+      });
+      await res.submitHandler({ preventDefault: () => {} });
+      assert.match(status.innerHTML, /Wysłano pomyślnie/);
+
+      globalThis.fetch = async () => ({
+        json: async () => ({ success: false, message: 'Błąd walidacji' })
+      });
+      await res.submitHandler({ preventDefault: () => {} });
+      assert.match(status.innerHTML, /Błąd walidacji/);
+    } finally {
+      globalThis.FormData = origFormData;
+      globalThis.fetch = origFetch;
+    }
   });
 });
