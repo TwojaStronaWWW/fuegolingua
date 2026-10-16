@@ -23,8 +23,9 @@ export const QUICK_PROMPTS_MAP = {
   ],
   twojastronawww: [
     'Ile kosztuje strona WWW?',
-    'Wdrożenie czatbota AI',
-    'Jak wygląda współpraca?'
+    'Jak wygląda proces współpracy?',
+    'Dlaczego kod zamiast WordPressa?',
+    'Jak działa asystent AI na stronie?'
   ]
 };
 
@@ -524,15 +525,19 @@ export function initAiWidget(doc = document, win = globalThis.window) {
 
     try {
       const fetchFn = win?.fetch || globalThis.fetch;
+      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 9000) : null;
       const res = await fetchFn(routerUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        ...(controller ? { signal: controller.signal } : {}),
         body: JSON.stringify({
           site_id: siteId,
           question: trimmed,
           history: conversationHistory.slice(-8)
         })
       });
+      if (timeoutId) clearTimeout(timeoutId);
 
       const data = await res.json();
       typingMsg.remove?.();
