@@ -15,22 +15,30 @@ describe('Integralność semantyczna i standardy HTML5 (FuegoLingua.pl)', () => 
   const cennikHtmlPath = path.join(ROOT_DIR, 'cennik.html');
   const cennikContent = fs.existsSync(cennikHtmlPath) ? fs.readFileSync(cennikHtmlPath, 'utf8') : '';
 
+  const pages = [
+    ['index.html', indexContent],
+    ['cennik.html', cennikContent],
+  ];
+
   test('Pliki index.html oraz cennik.html istnieją i nie są puste', () => {
     assert.ok(indexContent.length > 100, 'index.html powinien zawierać pełny kod strony');
     assert.ok(cennikContent.length > 100, 'cennik.html powinien zawierać pełny kod strony');
   });
 
-  test('Pliki HTML posiadają poprawny DOCTYPE i atrybut lang="pl"', () => {
-    for (const [name, content] of [['index.html', indexContent], ['cennik.html', cennikContent]]) {
+  test('Pliki HTML posiadają poprawny DOCTYPE, atrybut lang="pl", skip-link oraz semantyczny <main id="main-content">', () => {
+    for (const [name, content] of pages) {
       assert.match(content, /<!DOCTYPE html>/i, `Brak <!DOCTYPE html> w ${name}`);
       assert.match(content, /<html\s+[^>]*lang=["']pl["']/i, `Tag <html> w ${name} musi posiadać lang="pl"`);
+      assert.match(content, /class=["']skip-link["']/i, `Brak linku dostępności .skip-link w ${name}`);
+      assert.match(content, /<main\s+[^>]*id=["']main-content["']/i, `Brak <main id="main-content"> w ${name}`);
     }
   });
 
-  test('Sekcja <head> zawiera kodowanie UTF-8, meta viewport, title oraz meta description', () => {
-    for (const [name, content] of [['index.html', indexContent], ['cennik.html', cennikContent]]) {
+  test('Sekcja <head> zawiera kodowanie UTF-8, meta viewport, theme-color, title, meta description, canonical, manifest i Schema.org', () => {
+    for (const [name, content] of pages) {
       assert.match(content, /<meta\s+charset=["']?utf-8/i, `Brak deklaracji UTF-8 w ${name}`);
       assert.match(content, /<meta\s+name=["']viewport["']/i, `Brak meta viewport w ${name}`);
+      assert.match(content, /<meta\s+name=["']theme-color["']/i, `Brak meta theme-color w ${name}`);
       assert.match(content, /<title>[^<]+<\/title>/i, `Brak tagu <title> w ${name}`);
       assert.match(content, /<meta\s+name=["']description["']/i, `Brak meta description w ${name}`);
       assert.match(content, /<meta\s+name=["']robots["']/i, `Brak meta robots w ${name}`);
@@ -40,32 +48,87 @@ describe('Integralność semantyczna i standardy HTML5 (FuegoLingua.pl)', () => 
     }
   });
 
+  test('Zasada Separation of Concerns (SoC): brak stylów inline style="..." oraz onclick="..." w plikach HTML', () => {
+    for (const [name, content] of pages) {
+      assert.doesNotMatch(content, /\sstyle=["'][^"']*["']/i, `Wykryto niedozwolony atrybut inline style="..." w ${name}`);
+      assert.doesNotMatch(content, /\sonclick=["'][^"']*["']/i, `Wykryto niedozwolony atrybut inline onclick="..." w ${name}`);
+      assert.doesNotMatch(content, /<style[\s>]/i, `Wykryto niedozwolony blok <style> w ${name}`);
+    }
+  });
+
   test('Hierarchia nagłówków: index.html oraz cennik.html posiadają dokładnie jeden główny nagłówek <h1>', () => {
-    for (const [name, content] of [['index.html', indexContent], ['cennik.html', cennikContent]]) {
+    for (const [name, content] of pages) {
       const h1Count = (content.match(/<h1[\s>]/gi) || []).length;
       assert.equal(h1Count, 1, `Strona ${name} powinna posiadać dokładnie jeden nagłówek <h1>, znaleziono: ${h1Count}`);
     }
   });
 
-  test('Formularz kontaktowy w index.html zawiera wymagane pola (name, email, message, honeypot)', () => {
+  test('Wszystkie odnośniki zewnętrzne z target="_blank" posiadają rel="noopener" (ochrona Reverse Tabnabbing)', () => {
+    for (const [name, content] of pages) {
+      const targetBlankLinks = content.match(/<a\s+[^>]*target=["']_blank["'][^>]*>/gi) || [];
+      for (const linkTag of targetBlankLinks) {
+        assert.match(linkTag, /rel=["'][^"']*noopener[^"']*["']/i, `Link z target="_blank" w ${name} nie posiada rel="noopener": ${linkTag}`);
+      }
+    }
+  });
+
+  test('Wszystkie lokalne zasoby i kotwice (#id) w index.html oraz cennik.html fizycznie istnieją', () => {
+    for (const [name, content] of pages) {
+      const attrRegex = /(?:src|href)=["']([^"']+)["']/gi;
+      let match;
+      let checkedAssets = 0;
+
+      while ((match = attrRegex.exec(content)) !== null) {
+        const rawRef = match[1];
+        if (
+          rawRef.startsWith('http://') ||
+          rawRef.startsWith('https://') ||
+          rawRef.startsWith('mailto:') ||
+          rawRef.startsWith('tel:')
+        ) {
+          continue;
+        }
+
+        if (rawRef.startsWith('#')) {
+          const targetId = rawRef.slice(1);
+          const idRegex = new RegExp(`id=["']${targetId}["']`, 'i');
+          assert.match(content, idRegex, `Kotwica nawigacyjna ${rawRef} w ${name} wskazuje na nieistniejący element id="${targetId}"`);
+          continue;
+        }
+
+        const cleanRelativePath = rawRef.split('?')[0].split('#')[0];
+        const resolvedPath = path.join(ROOT_DIR, cleanRelativePath);
+        assert.ok(
+          fs.existsSync(resolvedPath),
+          `Zasób lokalny zadeklarowany w ${name} nie istnieje na dysku: ${rawRef} (${resolvedPath})`
+        );
+        checkedAssets++;
+      }
+
+      assert.ok(checkedAssets >= 4, `Oczekiwano sprawdzenia co najmniej 4 lokalnych zasobów w ${name}`);
+    }
+  });
+
+  test('Formularz kontaktowy w index.html zawiera wymagane pola (name, phone, email, message, newsletter_consent, honeypot, RODO)', () => {
     assert.match(indexContent, /<form[^>]*id=["']contactForm["']/i, 'Brak formularza #contactForm w index.html');
     assert.match(indexContent, /name=["']name["']/i, 'Brak pola name w formularzu');
+    assert.match(indexContent, /name=["']phone["']/i, 'Brak pola phone w formularzu');
     assert.match(indexContent, /name=["']email["']/i, 'Brak pola email w formularzu');
     assert.match(indexContent, /name=["']message["']/i, 'Brak pola message w formularzu');
-    // Honeypot field
+    assert.match(indexContent, /name=["']newsletter_consent["']/i, 'Brak pola newsletter_consent w formularzu');
     assert.match(indexContent, /name=["']website_url["']/i, 'Brak pola honeypot website_url chroniącego przed botami');
   });
 
   test('Skrypty JS oraz Asystent AI (data-site-id="fuegolingua") są poprawnie podpięte, brak martwych komentarzy testowych', () => {
-    assert.match(indexContent, /src=["'][^"']*(?:main\.js|script\.js)[^"']*["']/i, 'Brak podpięcia skryptu w index.html');
-    assert.match(cennikContent, /src=["'][^"']*(?:main\.js|script\.js)[^"']*["']/i, 'Brak podpięcia skryptu w cennik.html');
-    assert.match(indexContent, /ai-widget\.js[^>]*data-site-id=["']fuegolingua["']/i, 'Brak podpięcia Asystenta AI w index.html');
-    assert.match(cennikContent, /ai-widget\.js[^>]*data-site-id=["']fuegolingua["']/i, 'Brak podpięcia Asystenta AI w cennik.html');
+    for (const [name, content] of pages) {
+      assert.match(content, /src=["'][^"']*(?:main\.js|script\.js)[^"']*["']/i, `Brak podpięcia skryptu w ${name}`);
+      assert.match(content, /ai-widget\.js[^>]*data-site-id=["']fuegolingua["']/i, `Brak podpięcia Asystenta AI w ${name}`);
+    }
     assert.doesNotMatch(indexContent, /<!-- test -p->/i, 'index.html zawiera śmieciowy komentarz testowy');
   });
 
   test('Optymalizacja pierwszego ładowania: preconnect do CDN, subsetting ikon oraz lazy-loading orbity 3D', () => {
-    for (const [name, content] of [['index.html', indexContent], ['cennik.html', cennikContent]]) {
+    for (const [name, content] of pages) {
       assert.match(content, /<link\s+rel=["']preconnect["']\s+href=["']https:\/\/media\.fuegolingua\.pl["']/i, `Brak preconnect do media.fuegolingua.pl w ${name}`);
       assert.match(content, /Material\+Symbols\+Rounded[^"']*icon_names=/i, `Brak subsettingu ikon Material Symbols (icon_names) w ${name}`);
     }

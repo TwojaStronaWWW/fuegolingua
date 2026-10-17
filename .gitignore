@@ -5,6 +5,7 @@ package-lock.json
 # Environment & Secrets (ISO 27001)
 .env
 .env.*
+!.env.example
 config/secrets.php
 .htpasswd
 

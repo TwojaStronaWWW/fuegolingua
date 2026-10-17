@@ -1,40 +1,65 @@
-<IfModule mod_expires.c>
-    ExpiresActive On
-    
-    # Images
-    ExpiresByType image/jpg "access plus 1 year"
-    ExpiresByType image/jpeg "access plus 1 year"
-    ExpiresByType image/gif "access plus 1 year"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType image/webp "access plus 1 year"
-    ExpiresByType image/svg+xml "access plus 1 year"
-    ExpiresByType image/x-icon "access plus 1 year"
+Options -Indexes
 
-    # CSS, JavaScript
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType text/javascript "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-    
-    # Fonts
-    ExpiresByType application/font-woff2 "access plus 1 year"
+AddDefaultCharset UTF-8
+AddType 'text/html; charset=UTF-8' html
+AddType 'text/css; charset=UTF-8' css
+AddType 'application/javascript; charset=UTF-8' js
+AddType 'application/json; charset=UTF-8' json
+AddType 'application/manifest+json; charset=UTF-8' webmanifest
+AddType 'image/webp' webp
+
+# Nagłówki bezpieczeństwa OWASP / ISO 27001 oraz Cache-Control
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  Header unset ETag
+
+  <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|webp|svg|woff2|js|css|swf)$">
+    Header always set Cache-Control "max-age=31536000, public"
+    Header unset Last-Modified
+  </FilesMatch>
+  <FilesMatch "\.(html|htm|php)$">
+    Header always set Cache-Control "max-age=600, private, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+FileETag None
+
+# Wydajność: Expires & Kompresja GZIP/DEFLATE (Core Web Vitals)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType text/javascript "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType application/font-woff2 "access plus 1 year"
 </IfModule>
 
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json image/svg+xml
 </IfModule>
 
-<IfModule mod_headers.c>
-    <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|webp|js|css|swf)$">
-        Header always set Cache-Control "max-age=31536000, public"
-        Header unset Last-Modified
-    </FilesMatch>
-    <FilesMatch "\.(html|htm|php)$">
-        Header always set Cache-Control "max-age=600, private, must-revalidate"
-    </FilesMatch>
+# Wyłączenie wyświetlania błędów PHP na środowisku produkcyjnym (ISO 27001)
+<IfModule mod_php.c>
+  php_flag display_errors Off
+  php_flag log_errors On
 </IfModule>
 
-# Disable ETags (Use Cache-Control instead)
-FileETag None
-<IfModule mod_headers.c>
-    Header unset ETag
-</IfModule>
+# Blokada bezpośredniego dostępu HTTP do kopii zapasowych, logów i plików środowiskowych
+<FilesMatch "(^#.*#|\.(bak|conf|dist|fla|in[ci]|log|orig|psd|sh|sql|sw[op]|tmp)|~|\.env.*)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>

@@ -1,11 +1,15 @@
 /**
- * FuegoLingua - Moduł Asystenta AI (Universal Embeddable AI Agent Widget v2.1)
+ * FuegoLingua & TwojaStronaWWW - Moduł Asystenta AI (Universal Embeddable AI Agent Widget v3.0)
  *
- * Architektura Platform-First & Zero-Bloat (Vanilla ES6+):
+ * Skumulowane najlepsze praktyki z FuegoLingua, TwojaStronaWWW, KatoSalsaHub & _site-template:
+ * - Architektura Platform-First & Zero-Bloat (Vanilla ES6+, 100% Separation of Concerns - brak stylów inline)
  * - Komunikacja z centralnym routerem AI na VPS (https://ai.twojastronawww.pl/chat-router.php)
+ * - Obsługa 7-modelowej kaskady High-Availability po stronie VPS
+ * - Dynamiczne Centrum Wiedzy ze strony i bazy JSON/Wiki z wyszukiwaniem fleksyjnym
+ * - Dwupoziomowy Response Cache (pamięć podręczna zapytań) z automatyczną inwalidacją (kbVersion)
  * - Pamięć rozmowy Multi-Turn (do 8 ostatnich wiadomości w sessionStorage)
  * - Bezpieczny mikro-parser Markdown (100% odporny na XSS)
- * - Szybkie podpowiedzi pytań (Quick Prompts)
+ * - Szybkie podpowiedzi pytań (Quick Prompts per site_id)
  * - Lokalny merytoryczny fallback (Zero-Downtime Knowledge Base) na wypadek braku połączenia z VPS
  */
 
@@ -16,18 +20,228 @@ export const QUICK_PROMPTS_MAP = {
     'Zajęcia indywidualne czy grupowe?',
     'Hiszpański w biznesie / branżowy'
   ],
-  katosalsahub: [
-    'Ile kosztuje karnet?',
-    'Czy akceptujecie Multisport?',
-    'Kursy od podstaw (P0)'
-  ],
   twojastronawww: [
     'Ile kosztuje strona WWW?',
-    'Jak wygląda proces współpracy?',
     'Dlaczego kod zamiast WordPressa?',
-    'Jak działa asystent AI na stronie?'
+    'Wdrożenie czatbota AI (RAG)',
+    'Jak wygląda współpraca?'
+  ],
+  katosalsahub: [
+    'Czym jest Salsopedia i jak z niej korzystać?',
+    'Co to jest Enchufla i Dile Que No?',
+    'Gdzie tańczymy i jak działa Radio?',
+    'Jak dodać lub poprawić hasło w Salsopedii?'
   ]
 };
+
+const CATEGORY_LABELS_PL = {
+  steps: 'Kroki (Podstawy)',
+  figures: 'Figury (Casino / Rueda)',
+  dance: 'Taniec',
+  styles: 'Style Tańca',
+  music: 'Muzyka',
+  instruments: 'Instrumenty',
+  bands: 'Zespoły i Artyści',
+  history: 'Historia',
+  gods: 'Bogowie (Orishas)',
+  instructors: 'Instruktorzy',
+  schools: 'Szkoły Tańca'
+};
+
+/**
+ * Normalizuje tekst zapytania do klucza pamięci podręcznej (Response Cache)
+ * @param {string} text
+ * @returns {string}
+ */
+export function normalizeCacheQuery(text) {
+  if (!text) return '';
+  return String(text)
+    .toLowerCase()
+    .replace(/[?!.,;:]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Usuwa znaki diakrytyczne (PL / ES) i upraszcza tekst do wyszukiwania pełnotekstowego
+ * @param {string} text
+ * @returns {string}
+ */
+export function normalizeSearchText(text) {
+  if (!text) return '';
+  const map = {
+    ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z',
+    á: 'a', é: 'e', í: 'i', ú: 'u', ü: 'u', ñ: 'n'
+  };
+  return String(text)
+    .toLowerCase()
+    .replace(/[ąćęłńóśźżáéíúüñ]/g, (ch) => map[ch] || ch)
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Szybki, deterministyczny skrót wersji bazy wiedzy (FNV-1a 32-bit + rozmiar bazy).
+ * @param {Array<Object>} entries
+ * @returns {string}
+ */
+export function computeKnowledgeVersion(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return 'kb_v0_empty';
+  }
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < entries.length; i++) {
+    const item = entries[i] || {};
+    const cats = Array.isArray(item.category) ? item.category.join(',') : String(item.category || '');
+    const record = `${item.id || ''}|${item.term || ''}|${item.definition || ''}|${cats}|${item.status || ''}|${item.verification_count || 0}|${item.last_updated || ''}`;
+    for (let j = 0; j < record.length; j++) {
+      hash ^= record.charCodeAt(j);
+      hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+  }
+  return `kb_v${entries.length}_${hash.toString(16)}`;
+}
+
+/**
+ * Przeszukuje dynamiczną bazę wiedzy pod kątem zapytania użytkownika.
+ * @param {string} question
+ * @param {Array<Object>} entries
+ * @param {number} limit
+ * @returns {Array<Object>}
+ */
+export function searchKnowledgeEntries(question, entries, limit = 5) {
+  if (!question || !Array.isArray(entries) || entries.length === 0) return [];
+
+  const qNorm = normalizeSearchText(question);
+  if (!qNorm) return [];
+
+  const stopWords = new Set([
+    'co', 'to', 'jest', 'sa', 'jak', 'jaki', 'jaka', 'jakie', 'gdzie', 'kiedy',
+    'czy', 'na', 'w', 'we', 'z', 'ze', 'do', 'od', 'po', 'o', 'i', 'a', 'oraz',
+    'lub', 'albo', 'mi', 'sie', 'tym', 'ten', 'ta', 'te', 'oznacza', 'znaczy',
+    'opowiedz', 'wyjasnij', 'powiedz', 'czym', 'kim', 'kto', 'mozna', 'jakis',
+    'salsopedii', 'salsopedia', 'salsa', 'salsie', 'tancu', 'taniec', 'figura', 'krok'
+  ]);
+
+  const rawTokens = qNorm.split(' ').filter((t) => t.length >= 2 && !stopWords.has(t));
+  const stems = rawTokens.map((t) => {
+    if (t.length >= 6) return t.replace(/(ach|ami|owi|iem|om|ie|ow|ej|ym|im|ia|iu|ek|ka|ki|ce|ke|y|a|e|i|u|o)$/, '');
+    if (t.length >= 5) return t.replace(/(ie|ow|ej|ym|ia|ka|ki|ce|y|a|e|i|u)$/, '');
+    return t;
+  }).filter((s) => s.length >= 3);
+
+  const categoryAliases = {
+    steps: ['krok', 'kroki', 'podstaw', 'basico', 'guapea'],
+    figures: ['figur', 'rueda', 'ruedzie', 'komend', 'casino', 'wystep'],
+    styles: ['styl', 'odmian', 'gatun', 'rodzaj'],
+    music: ['muzyk', 'rytm', 'clave', 'utwor', 'piosen'],
+    instruments: ['instrument', 'beben', 'bebny', 'perkuj', 'conga', 'timbales', 'clave'],
+    bands: ['zespol', 'orkiestr', 'artyst', 'kapel', 'spiewa', 'muzykant', 'van', 'havana'],
+    history: ['histori', 'korzen', 'pochodz', 'tradycj', 'kuba'],
+    gods: ['orish', 'orisza', 'bog', 'bostw', 'santeri', 'yorub', 'afro', 'chango', 'eleggua', 'yemaya', 'oshun'],
+    instructors: ['instruktor', 'nauczyciel', 'prowadz', 'trener', 'uczy'],
+    schools: ['szkol', 'kurs', 'zajec', 'lekcj', 'gdzie uczyc']
+  };
+
+  const matchedCategories = new Set();
+  for (const [catKey, keywords] of Object.entries(categoryAliases)) {
+    if (keywords.some((kw) => qNorm.includes(kw))) {
+      matchedCategories.add(catKey);
+    }
+  }
+
+  const scored = [];
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    if (!entry || !entry.term) continue;
+
+    const termNorm = normalizeSearchText(entry.term);
+    const termClean = termNorm.replace(/\([^)]*\)/g, '').trim();
+    const defNorm = normalizeSearchText(entry.definition || '');
+    const cats = Array.isArray(entry.category) ? entry.category : (entry.category ? [entry.category] : []);
+
+    let score = 0;
+
+    if (termNorm && qNorm === termNorm) {
+      score += 120;
+    } else if (termClean && termClean.length >= 3 && qNorm.includes(termClean)) {
+      score += 85;
+    } else if (termNorm && termNorm.length >= 3 && qNorm.includes(termNorm)) {
+      score += 80;
+    }
+
+    for (const token of rawTokens) {
+      if (termNorm.split(' ').includes(token)) {
+        score += 45;
+      } else if (token.length >= 3 && termNorm.includes(token)) {
+        score += 30;
+      }
+      if (token.length >= 3 && defNorm.includes(token)) {
+        score += 10;
+      }
+    }
+
+    for (const stem of stems) {
+      if (stem.length >= 3 && termNorm.includes(stem)) {
+        score += 22;
+      }
+      if (stem.length >= 4 && defNorm.includes(stem)) {
+        score += 6;
+      }
+    }
+
+    for (const cat of cats) {
+      if (matchedCategories.has(cat)) {
+        score += 14;
+      }
+    }
+
+    if (score > 0) {
+      scored.push({ entry, score });
+    }
+  }
+
+  scored.sort((a, b) => b.score - a.score || String(a.entry.term).localeCompare(String(b.entry.term), 'pl'));
+  return scored.slice(0, limit).map((item) => item.entry);
+}
+
+/**
+ * Buduje zwięzły kontekst RAG z dynamicznej bazy wiedzy do przesłania do routera AI
+ * @param {string} question
+ * @param {Array<Object>} entries
+ * @returns {string}
+ */
+export function buildDynamicContext(question, entries) {
+  if (!Array.isArray(entries) || entries.length === 0) return '';
+
+  const matched = searchKnowledgeEntries(question, entries, 6);
+  const catCounts = {};
+  for (const item of entries) {
+    const cats = Array.isArray(item.category) ? item.category : [item.category];
+    for (const c of cats) {
+      if (c) catCounts[c] = (catCounts[c] || 0) + 1;
+    }
+  }
+
+  const summaryParts = Object.entries(catCounts).map(
+    ([cat, count]) => `${CATEGORY_LABELS_PL[cat] || cat}: ${count}`
+  );
+
+  let context = `[AKTUALNY STAN BAZY WIEDZY (${computeKnowledgeVersion(entries)})]: Łącznie ${entries.length} haseł (${summaryParts.join(', ')}).\n`;
+
+  if (matched.length > 0) {
+    context += 'Najbardziej pasujące hasła na stronie:\n';
+    for (const m of matched) {
+      const catsLabel = (Array.isArray(m.category) ? m.category : [m.category])
+        .map((c) => CATEGORY_LABELS_PL[c] || c)
+        .join(', ');
+      context += `- **${m.term}** [Kategoria: ${catsLabel}]: ${m.definition}\n`;
+    }
+  }
+
+  return context.trim();
+}
 
 /**
  * Bezpieczny mikro-parser Markdown (100% odporny na XSS)
@@ -90,47 +304,119 @@ export function formatMarkdown(rawText) {
 }
 
 /**
- * Lokalna odpowiedź awaryjna oparta na oficjalnej bazie wiedzy FuegoLingua
- * (gwarantuje ciągłość obsługi klienta przy chwilowej niedostępności sieci/tunelu VPS)
+ * Lokalna odpowiedź awaryjna (Zero-Downtime Fallback) dopasowana do projektu
+ * oraz dynamicznej bazy wiedzy ze strony.
  * @param {string} question
+ * @param {string} siteId
+ * @param {Array<Object>} knowledgeEntries
  * @returns {string}
  */
-export function getLocalFallbackAnswer(question) {
+export function getLocalFallbackAnswer(question, siteId = 'fuegolingua', knowledgeEntries = []) {
   const q = String(question || '').toLowerCase();
+  const qNorm = normalizeSearchText(question);
 
-  if (q.includes('próbn') || q.includes('probn') || q.includes('darmow') || q.includes('bezpłatn') || q.includes('bezplatn') || q.includes('konsultacj')) {
-    return 'Pierwsza **konsultacja wstępna online jest całkowicie bezpłatna**! To krótkie spotkanie, podczas którego poznajemy się, określamy Twój poziom i ustalamy plan nauki.\n- Zapisz się przez formularz na dole strony\n- Napisz na: kontakt@fuegolingua.pl\n- Zadzwoń: **796-868-967**';
+  // 1. Obsługa Kato Salsa Hub & Salsopedii
+  if (siteId === 'katosalsahub' || (Array.isArray(knowledgeEntries) && knowledgeEntries.length > 0)) {
+    const isMetaSalsopediaQuestion =
+      qNorm.includes('salsoped') ||
+      qNorm.includes('encykloped') ||
+      qNorm.includes('wikiped') ||
+      qNorm.includes('dodac hasl') ||
+      qNorm.includes('zaproponowac hasl') ||
+      qNorm.includes('zglosic poprawk') ||
+      qNorm.includes('poprawic hasl') ||
+      qNorm.includes('moderacj') ||
+      qNorm.includes('weryfikacj') ||
+      qNorm.includes('ile hasel');
+
+    const matchedEntries = searchKnowledgeEntries(question, knowledgeEntries, 3);
+
+    if (matchedEntries.length > 0 && !isMetaSalsopediaQuestion) {
+      const top = matchedEntries[0];
+      const cats = (Array.isArray(top.category) ? top.category : [top.category])
+        .filter(Boolean)
+        .map((c) => CATEGORY_LABELS_PL[c] || c)
+        .join(', ');
+
+      let response = `W **Salsopedii** znajdziesz dokładne wyjaśnienie hasła **${top.term}**${cats ? ` (${cats})` : ''}:\n- ${top.definition}`;
+      if (matchedEntries.length > 1) {
+        const related = matchedEntries
+          .slice(1)
+          .map((e) => `**${e.term}** (${e.definition})`)
+          .join('\n- ');
+        response += `\nPowiązane pojęcia w Salsopedii:\n- ${related}`;
+      }
+      response += `\nPełny katalog haseł z wyszukiwarką i linkowaniem znajdziesz w zakładce https://katosalsahub.pl/salsopedia.html`;
+      return response;
+    }
+
+    if (isMetaSalsopediaQuestion) {
+      const countInfo = Array.isArray(knowledgeEntries) && knowledgeEntries.length > 0
+        ? `obecnie **${knowledgeEntries.length} haseł**`
+        : 'ponad **115 haseł**';
+      return `**Salsopedia** to nasza otwarta encyklopedia salsy kubańskiej i kultury afro-kubańskiej (zawiera ${countInfo} w 11 kategoriach: Kroki, Figury Casino/Rueda, Taniec, Style, Muzyka, Instrumenty, Zespoły, Historia, Bogowie Orishas, Instruktorzy i Szkoły Tańca):\n- **Wyszukiwanie i linki**: wpisz frazę w wyszukiwarce lub klikaj podświetlone pojęcia bezpośrednio w definicjach\n- **Dodawanie i edycja (Salsopedia Studio)**: kliknij **„Zaproponuj hasło”** lub **„Zgłoś poprawkę”** przy karcie — zobaczysz podgląd na żywo oraz porównanie zmian *Przed vs Po (Diff)*\n- **Weryfikacja merytoryczna**: zgłoszenia trafiają do kolejki moderacji i są oznaczane statusem potwierdzenia instruktorskiego.`;
+    }
+
+    if (qNorm.includes('radio') || qNorm.includes('timba nation') || qNorm.includes('sluchac') || qNorm.includes('timer') || qNorm.includes('wylacznik')) {
+      return '**Timba Nation Radio 🎺** gra na naszej stronie kubańską salsę i timbę **24/7 non-stop**:\n- Kliknij przycisk **▶ Włącz radio** w górnym pasku nawigacji lub w sekcji **#radio**\n- Odtwarzacz pokazuje aktualnie grany utwór i obsługuje sterowanie z ekranu blokady telefonu\n- Możesz ustawić **wyłącznik czasowy (Sleep Timer)** na **15, 30 lub 60 minut**.';
+    }
+
+    if (qNorm.includes('dancepuls') || qNorm.includes('imprez') || qNorm.includes('wydarzen') || qNorm.includes('event') || qNorm.includes('weekend') || qNorm.includes('warsztat') || qNorm.includes('social') || qNorm.includes('kiedy')) {
+      return 'Aktualne imprezy taneczne (sociale), warsztaty i festiwale sprawdzisz w dwóch miejscach:\n- **DancePuls** (https://dancepuls.katosalsahub.pl/) — nasz automatyczny kalendarz i zestawienie imprez Salsa, Bachata i Kizomba na Śląsku i w Krakowie\n- **Grupa Facebook Kato Salsa Hub** (https://www.facebook.com/groups/519446499987373) — bieżące umawianie się na potańcówki plenerowe i wyjścia grupowe.';
+    }
+
+    if (siteId === 'katosalsahub') {
+      const kbCount = Array.isArray(knowledgeEntries) && knowledgeEntries.length > 0 ? knowledgeEntries.length : 115;
+      return `Cześć! 💃🕺 Jestem asystentem **Kato Salsa Hub & Salsopedii**. Czerpię wiedzę na żywo z naszej **Salsopedii (${kbCount} haseł)** oraz całego portalu.\nZapytaj mnie o dowolną **figurę (np. Enchufla, Dile Que No, Setenta)**, **style kubańskie (Casino, Timba, Rueda, Son, Rumba, Afro)**, **Radio Timba Nation**, **gdzie tańczymy w Katowicach** lub **jak dodać hasło do Salsopedii**!`;
+    }
   }
 
-  if (q.includes('biznes') || q.includes('firm') || q.includes('stolar') || q.includes('budow') || q.includes('turyst') || q.includes('branż') || q.includes('specjalist')) {
-    return 'Prowadzimy dedykowane **kursy specjalistyczne** (cena maleje o **5 zł** za każdą dodatkową osobę, do 6 osób):\n- **Hiszpański w Biznesie**: od **130 zł** (60 min) / **160 zł** (90 min)\n- **Hiszpański w Stolarce i Budownictwie**: od **150 zł** (60 min) / **170 zł** (90 min)\n- **Hiszpański w Turystyce**: od **100 zł** (60 min) / **120 zł** (90 min)\nPełny wykaz znajdziesz w zakładce https://fuegolingua.pl/cennik.html';
+  // 2. Obsługa FuegoLingua
+  if (siteId === 'fuegolingua') {
+    if (q.includes('próbn') || q.includes('probn') || q.includes('darmow') || q.includes('bezpłatn') || q.includes('bezplatn') || q.includes('konsultacj')) {
+      return 'Pierwsza **konsultacja wstępna online jest całkowicie bezpłatna**! To krótkie spotkanie, podczas którego poznajemy się, określamy Twój poziom i ustalamy plan nauki.\n- Zapisz się przez formularz na dole strony\n- Napisz na: kontakt@fuegolingua.pl\n- Zadzwoń: **796-868-967**';
+    }
+    if (q.includes('biznes') || q.includes('firm') || q.includes('stolar') || q.includes('budow') || q.includes('turyst') || q.includes('branż') || q.includes('specjalist')) {
+      return 'Prowadzimy dedykowane **kursy specjalistyczne** (cena maleje o **5 zł** za każdą dodatkową osobę, do 6 osób):\n- **Hiszpański w Biznesie**: od **130 zł** (60 min) / **160 zł** (90 min)\n- **Hiszpański w Stolarce i Budownictwie**: od **150 zł** (60 min) / **170 zł** (90 min)\n- **Hiszpański w Turystyce**: od **100 zł** (60 min) / **120 zł** (90 min)\nPełny wykaz znajdziesz w zakładce https://fuegolingua.pl/cennik.html';
+    }
+    if (q.includes('cen') || q.includes('koszt') || q.includes('ile ') || q.includes('pakiet') || q.includes('płaci')) {
+      return 'Oto nasz cennik dla **Ogólnych Poziomów (A1–B2)**:\n- **Lekcje indywidualne (1:1)**: 60 min – **95 zł** | 90 min – **135 zł**\n- **Lekcje w parze (2 osoby)**: 60 min – **85 zł/os.** | 90 min – **115 zł/os.**\n- **Grupy (3–6 osób)**: 60 min – **75 zł/os.** | 90 min – **95 zł/os.**\n- **Poziom Extreme (C1–C2)**: 1:1 od **140 zł** (60 min), w parze **120 zł/os.**, w grupie **100 zł/os.**\nPierwsza konsultacja jest **bezpłatna**!';
+    }
+    if (q.includes('indywidualn') || q.includes('grupow') || q.includes('parze') || q.includes('form') || q.includes('wygląda')) {
+      return 'Zajęcia odbywają się w **100% online na żywo**, a **80% lekcji to żywa rozmowa**:\n- **Indywidualnie (1:1)**: 100% uwagi lektora i tempo dopasowane do Ciebie (**95 zł** / 60 min na poz. A1–B2)\n- **W parze (2 os.)**: wspólna nauka ze znajomym lub partnerem (**85 zł/os.** / 60 min)\n- **Kameralne grupy (3–6 os.)**: duża dawka interakcji i wzajemnej motywacji (**75 zł/os.** / 60 min)';
+    }
+    if (q.includes('kontakt') || q.includes('telefon') || q.includes('mail') || q.includes('zapis')) {
+      return 'Skontaktuj się ze mną wygodnie:\n- E-mail: kontakt@fuegolingua.pl\n- Telefon: **796-868-967**\n- Instagram: **@fuegolingua_sin_limites**\nMożesz też wypełnić formularz kontaktowy na dole strony głównej!';
+    }
+    if (q.includes('tłumacz') || q.includes('tlumacz') || q.includes('delegacj') || q.includes('przysięgł') || q.includes('przysiegl')) {
+      return 'Główna działalność Fuego Lingua to **nauka hiszpańskiego**, a tłumaczenia nie są standardową usługą. Prowadząca jest w trakcie uzyskiwania uprawnień tłumacza przysięgłego, więc **na dziś nie wykonuje tłumaczeń przysięgłych**.\nW sprawie wyjazdu lub delegacji napisz na kontakt@fuegolingua.pl albo zadzwoń: **796-868-967**. Opisz termin i rodzaj zadania, a dostaniesz indywidualną odpowiedź.';
+    }
+    return 'Z tym pytaniem najlepiej napisać bezpośrednio do prowadzącej. Odpowie indywidualnie:\n- E-mail: kontakt@fuegolingua.pl\n- Telefon: **796-868-967**\nJeśli chcesz, mogę za to powiedzieć o cenach, formach zajęć albo bezpłatnej konsultacji w Fuego Lingua.';
   }
 
-  if (q.includes('cen') || q.includes('koszt') || q.includes('ile ') || q.includes('pakiet') || q.includes('płaci')) {
-    return 'Oto nasz cennik dla **Ogólnych Poziomów (A1–B2)**:\n- **Lekcje indywidualne (1:1)**: 60 min – **95 zł** | 90 min – **135 zł**\n- **Lekcje w parze (2 osoby)**: 60 min – **85 zł/os.** | 90 min – **115 zł/os.**\n- **Grupy (3–6 osób)**: 60 min – **75 zł/os.** | 90 min – **95 zł/os.**\n- **Poziom Extreme (C1–C2)**: 1:1 od **140 zł** (60 min), w parze **120 zł/os.**, w grupie **100 zł/os.**\nPierwsza konsultacja jest **bezpłatna**!';
+  // 3. Domyślna obsługa TwojaStronaWWW / Szablonu
+  if (q.includes('wordpress') || q.includes('wtyczk') || q.includes('kod') || q.includes('sql') || q.includes('szybk')) {
+    return 'Tworzymy strony w **czystym kodzie (architektura Flat-File)** zamiast ciężkiego WordPressa z dziesiątkami wtyczek:\n- **Waga poniżej 100 KB** i ładowanie **< 0.6s** (Google PageSpeed **95–100/100**)\n- **Brak bazy SQL** = zero ryzyka ataków SQL Injection i awarii po aktualizacjach\n- **100% kodu na własność** w repozytorium Git i brak ukrytych abonamentów.';
   }
 
-  if (q.includes('indywidualn') || q.includes('grupow') || q.includes('parze') || q.includes('form') || q.includes('wygląda')) {
-    return 'Zajęcia odbywają się w **100% online na żywo**, a **80% lekcji to żywa rozmowa**:\n- **Indywidualnie (1:1)**: 100% uwagi lektora i tempo dopasowane do Ciebie (**95 zł** / 60 min na poz. A1–B2)\n- **W parze (2 os.)**: wspólna nauka ze znajomym lub partnerem (**85 zł/os.** / 60 min)\n- **Kameralne grupy (3–6 os.)**: duża dawka interakcji i wzajemnej motywacji (**75 zł/os.** / 60 min)';
+  if (q.includes('ai') || q.includes('czat') || q.includes('bot') || q.includes('asystent') || q.includes('rag')) {
+    return 'Wdrażamy dedykowanych **Asystentów AI z bazą wiedzy firmy (RAG)** zintegrowanych z centralną bramką kaskadową (7 modeli LLM, pamięć podręczna zapytań):\n- Koszt wdrożenia: **od 900 PLN netto** (jednorazowa konfiguracja)\n- Działa **24/7**, odpowiada w ułamku sekundy z pamięci podręcznej i korzysta z darmowych pul API\n- Automatycznie przesyła powiadomienia na telefon, gdy klient zostawi namiar kontaktowy.';
   }
 
-  if (q.includes('kontakt') || q.includes('telefon') || q.includes('mail') || q.includes('zapis')) {
-    return 'Skontaktuj się ze mną wygodnie:\n- E-mail: kontakt@fuegolingua.pl\n- Telefon: **796-868-967**\n- Instagram: **@fuegolingua_sin_limites**\nMożesz też wypełnić formularz kontaktowy na dole strony głównej!';
+  if (q.includes('cen') || q.includes('koszt') || q.includes('ile ') || q.includes('pakiet') || q.includes('wycen')) {
+    return 'Każdy projekt wyceniamy przejrzyście przed startem prac (pakiety bazowe w **TwojaStronaWWW.pl**):\n- **Wizytówka / Landing Page**: **2 499 PLN netto** (czysty kod RWD, SEO, formularz z ochroną anty-spam)\n- **Strona Firmowa**: **5 499 PLN netto** (do 10 podstron, autorski CMS Flat-File bez SQL, PageSpeed 90+)\n- **Wdrożenie Czatbota AI (RAG)**: **od 900 PLN netto**\nNapisz przez formularz kontaktowy na dole strony – przygotujemy **bezpłatną wycenę w 24h**!';
   }
 
-  if (q.includes('tłumacz') || q.includes('tlumacz') || q.includes('delegacj') || q.includes('przysięgł') || q.includes('przysiegl')) {
-    return 'Główna działalność Fuego Lingua to **nauka hiszpańskiego**, a tłumaczenia nie są standardową usługą. Prowadząca jest w trakcie uzyskiwania uprawnień tłumacza przysięgłego, więc **na dziś nie wykonuje tłumaczeń przysięgłych**.\nW sprawie wyjazdu lub delegacji napisz na kontakt@fuegolingua.pl albo zadzwoń: **796-868-967**. Opisz termin i rodzaj zadania, a dostaniesz indywidualną odpowiedź.';
-  }
-
-  return 'Z tym pytaniem najlepiej napisać bezpośrednio do prowadzącej. Odpowie indywidualnie:\n- E-mail: kontakt@fuegolingua.pl\n- Telefon: **796-868-967**\nJeśli chcesz, mogę za to powiedzieć o cenach, formach zajęć albo bezpłatnej konsultacji w Fuego Lingua.';
+  return `Jestem wirtualnym doradcą serwisu **${siteId}**. Chętnie odpowiem na pytania o ofertę, wycenę, wdrożenie asystenta AI lub przebieg współpracy. Możesz też zostawić wiadomość w formularzu kontaktowym na dole strony!`;
 }
 
 /**
  * Inicjalizuje widget czatu AI w drzewie DOM
  * @param {Document} doc
  * @param {Window} win
+ * @param {Object} options
  */
-export function initAiWidget(doc = document, win = globalThis.window) {
+export function initAiWidget(doc = document, win = globalThis.window, options = {}) {
   if (!doc || !doc.body) return null;
   if (doc.getElementById('tsw-ai-widget-root')) return null;
 
@@ -140,16 +426,122 @@ export function initAiWidget(doc = document, win = globalThis.window) {
     doc.querySelector('script[src*="ai-widget.js"]') ||
     doc.querySelector('script[src*="widget.js"]');
 
-  const siteId = (scriptEl?.getAttribute('data-site-id') || 'fuegolingua').toLowerCase();
+  const siteId = (
+    options.siteId ||
+    scriptEl?.getAttribute('data-site-id') ||
+    'fuegolingua'
+  ).toLowerCase();
+
   const isLocalhost =
     win?.location?.hostname === 'localhost' || win?.location?.hostname === '127.0.0.1';
   const defaultRouterUrl = isLocalhost
     ? 'http://localhost:8085/chat-router.php'
     : 'https://ai.twojastronawww.pl/chat-router.php';
-  const routerUrl = scriptEl?.getAttribute('data-router-url') || defaultRouterUrl;
-  const title = scriptEl?.getAttribute('data-title') || 'Asystent Fuego Lingua';
+  const routerUrl =
+    options.routerUrl || scriptEl?.getAttribute('data-router-url') || defaultRouterUrl;
+  const title =
+    options.title || scriptEl?.getAttribute('data-title') || 'Asystent Fuego Lingua';
+  const kbUrl =
+    options.kbUrl ||
+    scriptEl?.getAttribute('data-kb-url') ||
+    (siteId === 'katosalsahub' ? 'assets/data/salsopedia.json' : '');
+  const kbApiUrl =
+    options.kbApiUrl ||
+    scriptEl?.getAttribute('data-kb-api') ||
+    (siteId === 'katosalsahub' ? 'assets/php/wiki.php?action=list' : '');
+
   const storageKey = 'tsw_ai_history_' + siteId;
+  const cacheStorageKey = 'tsw_ai_cache_' + siteId;
+  const cacheTtlMs = Number(options.cacheTtlMs) || 24 * 60 * 60 * 1000;
   const quickPrompts = QUICK_PROMPTS_MAP[siteId] || QUICK_PROMPTS_MAP.fuegolingua;
+
+  let knowledgeEntries = Array.isArray(options.initialKnowledge)
+    ? [...options.initialKnowledge]
+    : (Array.isArray(win?.AppState?.terms) && win.AppState.terms.length > 0 ? [...win.AppState.terms] : []);
+  let kbVersion = computeKnowledgeVersion(knowledgeEntries);
+  let responseCache = { kbVersion, entries: {} };
+
+  function loadResponseCache() {
+    try {
+      const storage = win?.localStorage || win?.sessionStorage;
+      const raw = storage?.getItem(cacheStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && parsed.entries) {
+          if (knowledgeEntries.length > 0 && parsed.kbVersion !== kbVersion) {
+            responseCache = { kbVersion, entries: {} };
+            saveResponseCache();
+          } else {
+            responseCache = {
+              kbVersion: parsed.kbVersion || kbVersion,
+              entries: parsed.entries || {}
+            };
+          }
+        }
+      }
+    } catch (_) {
+      responseCache = { kbVersion, entries: {} };
+    }
+  }
+
+  function saveResponseCache() {
+    try {
+      const storage = win?.localStorage || win?.sessionStorage;
+      storage?.setItem(cacheStorageKey, JSON.stringify(responseCache));
+    } catch (_) {}
+  }
+
+  function hasContactPii(text) {
+    const s = String(text || '');
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+    const phoneRegex = /(?:\+?48[\s-]?)?(?:\d[\s-]?){8}\d/;
+    return emailRegex.test(s) || phoneRegex.test(s);
+  }
+
+  function getCachedAnswer(question) {
+    const normQ = normalizeCacheQuery(question);
+    if (!normQ || hasContactPii(question)) return null;
+
+    if (knowledgeEntries.length > 0 && responseCache.kbVersion !== kbVersion) {
+      responseCache = { kbVersion, entries: {} };
+      saveResponseCache();
+      return null;
+    }
+
+    const item = responseCache.entries?.[normQ];
+    if (!item || !item.answer) return null;
+
+    const now = Date.now();
+    if (item.ts && now - item.ts > cacheTtlMs) {
+      delete responseCache.entries[normQ];
+      saveResponseCache();
+      return null;
+    }
+
+    if (knowledgeEntries.length > 0 && item.kbVersion && item.kbVersion !== kbVersion) {
+      delete responseCache.entries[normQ];
+      saveResponseCache();
+      return null;
+    }
+
+    return item.answer;
+  }
+
+  function setCachedAnswer(question, answer, source = 'ai') {
+    const normQ = normalizeCacheQuery(question);
+    if (!normQ || !answer || hasContactPii(question)) return;
+    if (!responseCache.entries || responseCache.kbVersion !== kbVersion) {
+      responseCache = { kbVersion, entries: {} };
+    }
+    responseCache.kbVersion = kbVersion;
+    responseCache.entries[normQ] = {
+      answer: String(answer),
+      kbVersion,
+      source,
+      ts: Date.now()
+    };
+    saveResponseCache();
+  }
 
   const style = doc.createElement('style');
   style.id = 'tsw-ai-widget-styles';
@@ -212,6 +604,23 @@ export function initAiWidget(doc = document, win = globalThis.window) {
       transform: translateY(0) scale(1);
       visibility: visible;
       pointer-events: auto;
+    }
+    @media (max-width: 600px) {
+      .tsw-ai-btn {
+        bottom: 16px;
+        right: 16px;
+        width: 54px;
+        height: 54px;
+      }
+      .tsw-ai-window {
+        bottom: 80px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-width: none;
+        height: min(500px, calc(100vh - 100px));
+        max-height: calc(100dvh - 100px);
+      }
     }
     .tsw-ai-header {
       background: linear-gradient(135deg, #2b1614 0%, #3d1c18 100%);
@@ -308,6 +717,9 @@ export function initAiWidget(doc = document, win = globalThis.window) {
       flex-wrap: wrap;
       gap: 6px;
       padding: 0 16px 10px;
+    }
+    .tsw-ai-chips.tsw-hidden {
+      display: none !important;
     }
     .tsw-ai-chip {
       background: rgba(232, 89, 12, 0.18);
@@ -424,10 +836,69 @@ export function initAiWidget(doc = document, win = globalThis.window) {
     }
   } catch (_) {}
 
+  loadResponseCache();
+
   function saveHistory() {
     try {
       win?.sessionStorage?.setItem(storageKey, JSON.stringify(conversationHistory.slice(-8)));
     } catch (_) {}
+  }
+
+  function updateKnowledgeEntries(newEntries) {
+    if (!Array.isArray(newEntries)) return kbVersion;
+    const prevVersion = kbVersion;
+    knowledgeEntries = [...newEntries];
+    kbVersion = computeKnowledgeVersion(knowledgeEntries);
+
+    if (prevVersion !== kbVersion) {
+      responseCache = { kbVersion, entries: {} };
+      saveResponseCache();
+
+      let historyUpdated = false;
+      for (let i = 0; i < conversationHistory.length - 1; i++) {
+        if (conversationHistory[i].role === 'user' && conversationHistory[i + 1]?.role === 'model') {
+          const userQ = conversationHistory[i].text;
+          const matched = searchKnowledgeEntries(userQ, knowledgeEntries, 1);
+          if (matched.length > 0) {
+            const refreshedAnswer = getLocalFallbackAnswer(userQ, siteId, knowledgeEntries);
+            if (conversationHistory[i + 1].text !== refreshedAnswer) {
+              conversationHistory[i + 1].text = refreshedAnswer;
+              setCachedAnswer(userQ, refreshedAnswer, 'kb_live_sync');
+              historyUpdated = true;
+            }
+          }
+        }
+      }
+      if (historyUpdated) {
+        saveHistory();
+        renderInitialView();
+      }
+    }
+    return kbVersion;
+  }
+
+  async function refreshKnowledge() {
+    const fetchFn = win?.fetch || globalThis.fetch;
+    if (typeof fetchFn !== 'function') return kbVersion;
+
+    if (Array.isArray(win?.AppState?.terms) && win.AppState.terms.length > 0) {
+      updateKnowledgeEntries(win.AppState.terms);
+    }
+
+    const urlsToTry = [kbApiUrl, kbUrl].filter(Boolean);
+    for (const url of urlsToTry) {
+      try {
+        const res = await fetchFn(url, { cache: 'no-cache' });
+        if (res && res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            updateKnowledgeEntries(data);
+            break;
+          }
+        }
+      } catch (_) {}
+    }
+    return kbVersion;
   }
 
   function appendMessageElement(role, text) {
@@ -444,14 +915,20 @@ export function initAiWidget(doc = document, win = globalThis.window) {
     return msg;
   }
 
+  function setChipsVisible(visible) {
+    if (!chipsContainer) return;
+    chipsContainer.classList?.toggle('tsw-hidden', !visible);
+    chipsContainer.style.display = visible ? 'flex' : 'none';
+  }
+
   function renderChips() {
     if (!chipsContainer) return;
     chipsContainer.innerHTML = '';
     if (conversationHistory.length > 0) {
-      chipsContainer.style.display = 'none';
+      setChipsVisible(false);
       return;
     }
-    chipsContainer.style.display = 'flex';
+    setChipsVisible(true);
     quickPrompts.forEach((promptText) => {
       const chip = doc.createElement('button');
       chip.type = 'button';
@@ -467,10 +944,11 @@ export function initAiWidget(doc = document, win = globalThis.window) {
   function renderInitialView() {
     if (!messagesContainer) return;
     messagesContainer.innerHTML = '';
-    appendMessageElement(
-      'model',
-      '¡Hola! 💃 Jestem wirtualnym doradcą **Fuego Lingua**. W czym mogę Ci pomóc? Zapytaj o bezpłatną lekcję próbną, cennik lub kursy hiszpańskiego!'
-    );
+    const welcomeText =
+      siteId === 'katosalsahub'
+        ? `Cześć! 💃🕺 Jestem wirtualnym asystentem **${title}**. Moim głównym centrum wiedzy jest **Salsopedia**, ale odpowiem też na wszystkie pytania o nasze potańcówki w Katowicach, style tańca, **Radio Timba Nation** i **DancePuls**. O co chcesz zapytać?`
+        : '¡Hola! 💃 Jestem wirtualnym doradcą **Fuego Lingua**. W czym mogę Ci pomóc? Zapytaj o bezpłatną lekcję próbną, cennik lub kursy hiszpańskiego!';
+    appendMessageElement('model', welcomeText);
     for (let i = 0; i < conversationHistory.length; i++) {
       appendMessageElement(conversationHistory[i].role, conversationHistory[i].text);
     }
@@ -483,6 +961,9 @@ export function initAiWidget(doc = document, win = globalThis.window) {
     toggleBtn.setAttribute('aria-expanded', String(isOpen));
     if (isOpen) {
       chatInput?.focus?.();
+      if (kbUrl || kbApiUrl) {
+        refreshKnowledge();
+      }
     }
   }
 
@@ -507,13 +988,39 @@ export function initAiWidget(doc = document, win = globalThis.window) {
     }
   });
 
+  const handleKnowledgeEvent = (e) => {
+    const terms = e?.detail?.terms || win?.AppState?.terms;
+    if (Array.isArray(terms)) {
+      updateKnowledgeEntries(terms);
+    } else {
+      refreshKnowledge();
+    }
+  };
+  win?.addEventListener?.('salsopedia:updated', handleKnowledgeEvent);
+  doc.addEventListener?.('salsopedia:updated', handleKnowledgeEvent);
+
   async function sendQuestion(text) {
     const trimmed = String(text || '').trim();
     if (!trimmed || sendBtn?.disabled) return;
 
-    if (chipsContainer) chipsContainer.style.display = 'none';
+    if (Array.isArray(win?.AppState?.terms) && win.AppState.terms.length > 0) {
+      updateKnowledgeEntries(win.AppState.terms);
+    }
+
+    setChipsVisible(false);
     appendMessageElement('user', trimmed);
     if (chatInput) chatInput.value = '';
+
+    const cachedAnswer = getCachedAnswer(trimmed);
+    if (cachedAnswer) {
+      appendMessageElement('model', cachedAnswer);
+      conversationHistory.push({ role: 'user', text: trimmed });
+      conversationHistory.push({ role: 'model', text: cachedAnswer });
+      conversationHistory = conversationHistory.slice(-8);
+      saveHistory();
+      if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      return { answer: cachedAnswer, cached: true, kbVersion };
+    }
 
     const typingMsg = doc.createElement('div');
     typingMsg.className = 'tsw-ai-msg tsw-ai-msg-bot tsw-ai-typing';
@@ -523,10 +1030,12 @@ export function initAiWidget(doc = document, win = globalThis.window) {
 
     if (sendBtn) sendBtn.disabled = true;
 
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 9000) : null;
+    const dynamicContext = buildDynamicContext(trimmed, knowledgeEntries);
+
     try {
       const fetchFn = win?.fetch || globalThis.fetch;
-      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      const timeoutId = controller ? setTimeout(() => controller.abort(), 9000) : null;
       const res = await fetchFn(routerUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -534,35 +1043,45 @@ export function initAiWidget(doc = document, win = globalThis.window) {
         body: JSON.stringify({
           site_id: siteId,
           question: trimmed,
+          kb_version: kbVersion,
+          dynamic_context: dynamicContext,
           history: conversationHistory.slice(-8)
         })
       });
-      if (timeoutId) clearTimeout(timeoutId);
 
       const data = await res.json();
       typingMsg.remove?.();
 
       if (res.ok && data && data.success && data.answer) {
         appendMessageElement('model', data.answer);
+        setCachedAnswer(trimmed, data.answer, 'ai');
         conversationHistory.push({ role: 'user', text: trimmed });
         conversationHistory.push({ role: 'model', text: data.answer });
+        conversationHistory = conversationHistory.slice(-8);
+        saveHistory();
+        return { answer: data.answer, cached: Boolean(data.cached), kbVersion };
       } else {
-        const fallback = getLocalFallbackAnswer(trimmed);
+        const fallback = getLocalFallbackAnswer(trimmed, siteId, knowledgeEntries);
         appendMessageElement('model', fallback);
+        setCachedAnswer(trimmed, fallback, 'fallback');
         conversationHistory.push({ role: 'user', text: trimmed });
         conversationHistory.push({ role: 'model', text: fallback });
+        conversationHistory = conversationHistory.slice(-8);
+        saveHistory();
+        return { answer: fallback, cached: false, kbVersion };
       }
-      conversationHistory = conversationHistory.slice(-8);
-      saveHistory();
     } catch (_) {
       typingMsg.remove?.();
-      const fallback = getLocalFallbackAnswer(trimmed);
+      const fallback = getLocalFallbackAnswer(trimmed, siteId, knowledgeEntries);
       appendMessageElement('model', fallback);
+      setCachedAnswer(trimmed, fallback, 'fallback');
       conversationHistory.push({ role: 'user', text: trimmed });
       conversationHistory.push({ role: 'model', text: fallback });
       conversationHistory = conversationHistory.slice(-8);
       saveHistory();
+      return { answer: fallback, cached: false, kbVersion };
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       if (sendBtn) sendBtn.disabled = false;
       if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -574,6 +1093,10 @@ export function initAiWidget(doc = document, win = globalThis.window) {
   });
 
   renderInitialView();
+
+  if ((kbUrl || kbApiUrl) && knowledgeEntries.length === 0 && !options.skipInitialFetch) {
+    refreshKnowledge();
+  }
 
   return {
     root,
@@ -589,7 +1112,16 @@ export function initAiWidget(doc = document, win = globalThis.window) {
     toggleChat,
     closeChat,
     sendQuestion,
-    getHistory: () => conversationHistory
+    getHistory: () => conversationHistory,
+    getKnowledgeVersion: () => kbVersion,
+    getKnowledgeEntries: () => knowledgeEntries,
+    updateKnowledgeEntries,
+    refreshKnowledge,
+    getCachedAnswer,
+    clearCache: () => {
+      responseCache = { kbVersion, entries: {} };
+      saveResponseCache();
+    }
   };
 }
 

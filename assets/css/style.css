@@ -5,6 +5,13 @@
 	--fuego-gold: oklch(85% 0.18 80);
 	--fuego-cream: oklch(98% 0.02 85);
 	--fuego-dark: oklch(25% 0.05 30);
+	--fuego-gradient: linear-gradient(135deg, var(--fuego-red), var(--fuego-orange));
+	--text-dark: var(--fuego-dark);
+
+	/* Standard Design Tokens (_site-template compatibility) */
+	--color-primary: var(--fuego-red);
+	--color-bg: var(--fuego-cream);
+	--color-text: var(--fuego-dark);
 
 	--font-heading: 'Playfair Display', serif;
 	--font-body: 'Raleway', sans-serif;
@@ -13,6 +20,25 @@
 
 	--shadow-lux: 0 20px 40px oklch(0% 0 0 / 15%);
 	--glass-blur: 6px; /* Reduced from 12px for performance */
+}
+
+/* Accessibility Skip Link */
+.skip-link {
+	position: absolute;
+	top: -100px;
+	left: 1rem;
+	background: var(--fuego-red);
+	color: #fff;
+	padding: 0.6rem 1.2rem;
+	z-index: 10001;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 700;
+	transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+	top: 1rem;
 }
 
 * {
@@ -203,6 +229,8 @@ h3 {
 
 .hamburger {
 	display: none;
+	background: transparent;
+	border: none;
 }
 
 /* --- Hero Section (Premium Dual-Image Layout) --- */
@@ -253,7 +281,7 @@ h3 {
 	}
 
 	.hero-subtitle {
-		font-family: var(--font-primary);
+		font-family: var(--font-heading);
 		font-size: clamp(1.2rem, 2.5vw, 1.8rem);
 		color: var(--fuego-orange);
 		margin-bottom: 1.5rem;
@@ -263,6 +291,13 @@ h3 {
 		opacity: 0;
 		line-height: 1.4;
 		text-transform: none; /* Removed uppercase since it's an emotional sentence */
+	}
+
+	.hero-subtitle-accent {
+		font-weight: 700;
+		color: var(--fuego-orange);
+		margin-bottom: 0.5rem;
+		display: block;
 	}
 
 	.hero-text-wrapper {
@@ -316,19 +351,6 @@ h3 {
 		animation: flamencoSway 8s ease-in-out infinite;
 		transform-origin: bottom center; /* Swaying from the feet */
 	}
-
-	.hero-accent-img {
-		position: absolute;
-		height: 70vh;
-		width: auto;
-		right: -10%;
-		bottom: 5%;
-		z-index: 1;
-		opacity: 0.4;
-		filter: blur(2px) saturate(0.8);
-		animation: floatAccent 8s ease-in-out infinite reverse;
-		pointer-events: none;
-	}
 }
 
 @keyframes slideUp {
@@ -356,58 +378,10 @@ h3 {
 	}
 }
 
-@keyframes floatAccent {
-	0%,
-	100% {
-		transform: translateY(0) scale(1);
-	}
-	50% {
-		transform: translateY(-25px) scale(1.02);
-	}
-}
-
-/* Navigation Styles cleared for rewrite */
-
 /* --- Offer --- */
 
 .section {
 	padding: 100px 0;
-}
-
-.offer-grid {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 2rem;
-}
-
-.offer-card {
-	background: #fff;
-	padding: 2rem;
-	border-radius: 15px;
-	text-align: center;
-	box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-	transition: var(--transition);
-	border: 1px solid rgba(0, 0, 0, 0.05);
-	flex: 1 1 300px; /* Flex items grow and shrink, min-width 300px */
-	max-width: 400px; /* Prevent them from becoming too wide on large screens */
-}
-
-.offer-card:hover {
-	transform: translateY(-10px);
-	box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-	border-color: var(--gold);
-}
-
-.offer-icon {
-	font-size: 2.5rem;
-	color: var(--primary-orange);
-	margin-bottom: 1rem;
-	background: #fff3e0;
-	width: 80px;
-	height: 80px;
-	line-height: 80px;
-	border-radius: 50%;
 }
 
 /* --- Offer Section (Halo Arc Showcase around Central Figure) --- */
@@ -775,7 +749,7 @@ h3 {
 	position: relative;
 
 	.quote-icon {
-		font-family: var(--font-secondary);
+		font-family: var(--font-heading);
 		font-size: 6rem;
 		color: var(--fuego-orange);
 		opacity: 0.15;
@@ -925,7 +899,7 @@ h3 {
 	z-index: 1;
 
 	h3 {
-		font-family: var(--font-secondary);
+		font-family: var(--font-heading);
 		font-size: 2rem;
 		color: var(--fuego-orange);
 		margin-bottom: 2rem;
@@ -1035,6 +1009,10 @@ h3 {
 	}
 }
 
+.honeypot-field {
+	display: none !important;
+}
+
 .form-group {
 	margin-bottom: 1.5rem;
 	position: relative;
@@ -1101,6 +1079,25 @@ select {
 	appearance: none;
 }
 
+.form-consent-label {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	font-size: 0.9rem;
+	color: oklch(40% 0.05 30);
+	line-height: 1.45;
+	margin-bottom: 1.5rem;
+	cursor: pointer;
+}
+
+.form-consent-label input[type='checkbox'] {
+	margin-top: 0.2rem;
+	width: 18px;
+	height: 18px;
+	accent-color: var(--fuego-orange);
+	flex-shrink: 0;
+}
+
 .btn-submit {
 	width: 100%;
 	padding: 1.2rem;
@@ -1124,6 +1121,67 @@ select {
 		transform: translateY(-2px);
 		box-shadow: 0 10px 20px oklch(55% 0.22 30 / 30%);
 	}
+}
+
+.form-feedback {
+	display: none;
+	padding: 0.9rem 1.1rem;
+	border-radius: 10px;
+	font-size: 0.95rem;
+	font-weight: 600;
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+}
+
+.form-feedback-error,
+.form-status .error {
+	color: #b91c1c;
+	background: rgba(239, 68, 68, 0.1);
+	border: 1px solid rgba(239, 68, 68, 0.35);
+	padding: 0.9rem 1.1rem;
+	border-radius: 10px;
+	margin-top: 1rem;
+}
+
+.form-feedback-success,
+.form-status .success {
+	color: #15803d;
+	background: rgba(22, 163, 74, 0.1);
+	border: 1px solid rgba(22, 163, 74, 0.35);
+	padding: 0.9rem 1.1rem;
+	border-radius: 10px;
+	margin-top: 1rem;
+}
+
+.rodo-note {
+	margin-top: 1rem;
+	font-size: 0.8rem;
+	color: oklch(45% 0.03 30);
+	line-height: 1.45;
+}
+
+/* Floating Call Button (Mobile) */
+.floating-call-btn {
+	position: fixed;
+	bottom: 24px;
+	left: 24px;
+	background: var(--fuego-gradient);
+	color: #fff;
+	padding: 0.75rem 1.25rem;
+	border-radius: 50px;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-weight: 700;
+	font-size: 0.95rem;
+	box-shadow: 0 8px 24px oklch(55% 0.22 30 / 40%);
+	z-index: 9998;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.floating-call-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 12px 28px oklch(55% 0.22 30 / 55%);
 }
 
 /* --- Giant Page Ornament Bottom --- */

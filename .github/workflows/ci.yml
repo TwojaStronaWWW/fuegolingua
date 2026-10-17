@@ -30,12 +30,14 @@ jobs:
             exit 1
           fi
 
-      - name: 1.3 Ochrona przed wyciekiem sekretów (.env, secrets.php, .htpasswd, dane CSV)
+      - name: 1.3 Skaner sekretów Gitleaks i ochrona danych CSV (ISO 27001)
         run: |
           if git ls-files | grep -E "(\.env|config/secrets\.php|\.htpasswd|leads_.*\.csv)$"; then
             echo "❌ Wykryto plik z wrażliwymi danymi w repozytorium!"
             exit 1
           fi
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.0/gitleaks_8.24.0_linux_x64.tar.gz | tar -xz -C /usr/local/bin gitleaks
+          gitleaks dir . --config .gitleaks.toml --verbose --redact
 
       - name: 1.4 Walidacja składni PHP
         run: |
@@ -56,12 +58,29 @@ jobs:
         if: hashFiles('package.json') != ''
         run: npm run check:syntax
 
-      - name: 1.7 Uruchomienie testów jednostkowych (node:test)
+      - name: 1.7 Weryfikacja integralności lokalnych linków i zasobów HTML
+        run: |
+          echo "🔍 Sprawdzanie referencji lokalnych linków..."
+          for html_file in $(find . -maxdepth 2 -name "*.html" -not -path "*/node_modules/*"); do
+            [ -f "$html_file" ] || continue
+            base=$(dirname "$html_file")
+            grep -oP '(?:src|href)="(?!https?://|#|javascript:|mailto:|tel:)([^"]+)"' "$html_file" 2>/dev/null | \
+            sed 's/.*="\(.*\)"/\1/' | sed 's/?.*//' | \
+            while read -r ref; do
+              if [ ! -f "$base/$ref" ] && [ ! -d "$base/$ref" ]; then
+                echo "❌ BRAK ZASOBU: $html_file → $ref"
+                exit 1
+              fi
+            done
+          done
+          echo "✅ Wszystkie lokalne linki i zasoby istnieją."
+
+      - name: 1.8 Uruchomienie testów jednostkowych (node:test)
         if: hashFiles('package.json') != ''
         run: npm test -- --experimental-test-coverage
 
-  lighthouse:
-    name: 2. Audyt Lighthouse CI (a11y, SEO, Best Practices)
+  smoke-test:
+    name: 2. Headless UI Smoke Test (Playwright)
     needs: validate
     runs-on: ubuntu-latest
 
@@ -74,7 +93,35 @@ jobs:
         with:
           node-version: 22
 
-      - name: 2.3 Audyt jakościowy Lighthouse CI
+      - name: 2.3 Instalacja silnika Chromium i uruchomienie testu dymnego UI
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          npm run test:smoke
+
+      - name: 2.4 Zapis diagnostyki w razie awarii (smoke-diagnostics)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-diagnostics
+          path: smoke-diagnostics/
+          retention-days: 7
+
+  lighthouse:
+    name: 3. Audyt Lighthouse CI (a11y, SEO, Best Practices)
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 3.1 Pobranie kodu repozytorium
+        uses: actions/checkout@v4
+
+      - name: 3.2 Konfiguracja środowiska Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 3.3 Audyt jakościowy Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12
         with:
           uploadArtifacts: true

@@ -187,3 +187,36 @@ Przykład w kodzie HTML:
 
 ### 5.4 Bezbiblioteczny Klient PHP (`api/R2Client.php`)
 Do obsługi bucketu R2 (upload, usuwanie, synchronizacja z poziomu PHP i CLI) stosujemy wbudowaną klasę `TwojaStronaWWW\Api\R2Client`, która komunikuje się bezpośrednio z API S3 z podpisem kryptograficznym AWS SigV4, bez instalacji ociężałych zewnętrznych bibliotek (`aws-sdk` czy `guzzle`).
+
+---
+
+## 🚀 6. Standard Podglądu Krawędziowego i Stagingu (Cloudflare Quick Tunnel)
+
+Podczas prac deweloperskich i prezentacji postępów klientowi, nie ma potrzeby tworzenia dedykowanych subdomen (np. `test.klient.pl`), modyfikacji rekordów DNS ani otwierania portów na routerze.
+
+### Szybki start:
+```bash
+# Uruchomienie lokalnego serwera (port 3000)
+npm run serve
+
+# W drugim oknie terminala – generowanie tymczasowego bezpiecznego linku HTTPS
+npm run preview:share
+```
+- Skrypt uruchamia `cloudflared tunnel --url http://localhost:3000` (w kontenerze Docker lub przez `npx cloudflared`).
+- Generuje unikalny link w domenie `*.trycloudflare.com` z pełnym certyfikatem SSL.
+- Po zakończeniu prezentacji naciśnięcie `Ctrl+C` natychmiast niszczy tunel.
+
+---
+
+## 📡 7. Standard Monitoringu Ciągłości Działania (Uptime Kuma & Ntfy)
+
+Każda witryna wdrożona na środowisko produkcyjne lub staging musi zostać objęta centralnym monitoringiem infrastruktury TwojaStronaWWW:
+
+| Parametr Monitoringu | Wartość Wzorcowa | Cel Inżynieryjny |
+|---|---|---|
+| **Panel Monitoringu** | https://monitoring.twojastronawww.pl | Centralny dashboard Uptime Kuma na VPS Oracle ARM. |
+| **Typ Monitora** | HTTP(s) | Weryfikacja kodu odpowiedzi 200 OK oraz ważności certyfikatu SSL. |
+| **Częstotliwość odpytywania** | 60 sekund | Wykrycie niedostępności serwera w czasie < 1 minuty. |
+| **Dopuszczalny czas odpowiedzi** | max 2000 ms | Alarmowanie przy degradacji wydajności serwera LH.pl. |
+| **Kanał Powiadomień** | Ntfy (`kpoczatek-vps-alerty`) | Natychmiastowe powiadomienia Push na telefon i desktop bez opóźnień e-mail. |
+| **Weryfikacja SSL** | Włączona (min. 14 dni przed wygaśnięciem) | Prewencyjna ochrona przed nieodnowionym certyfikatem Let's Encrypt / Cloudflare. |

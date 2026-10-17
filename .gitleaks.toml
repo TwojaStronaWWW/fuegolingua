@@ -1,0 +1,25 @@
+title = "FuegoLingua Secret Scanner Rules (ISO 27001)"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "osticket-api-key"
+description = "osTicket Helpdesk API Key"
+regex = '''(?i)(osticket_api_key|x-api-key)\s*[:=]\s*['"][A-F0-9]{32}['"]'''
+tags = ["key", "osticket"]
+
+[[rules]]
+id = "hardcoded-admin-password"
+description = "Hardcoded Admin Password"
+regex = '''(?i)(admin_secret|admin_pass)\s*[:=]\s*['"][^'"$]{8,}['"]'''
+tags = ["password", "admin"]
+
+[allowlist]
+description = "Allowlist for template examples, local gitignored env files, and tests"
+paths = [
+  '''^\.env$''',
+  '''^\.env\.example$''',
+  '''^config/secrets\.php$''',
+  '''^tests/.*''',
+]

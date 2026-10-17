@@ -1,19 +1,24 @@
 {
   "name": "fuegolingua",
   "version": "1.0.0",
-  "description": "Fuego Lingua - Hiszpański z Pasją. Lekka witryna edukacyjna, Vanilla Web + PHP API + CI/CD",
+  "description": "FuegoLingua - Nauka Hiszpańskiego Online (Vanilla Web with CI/CD & Unit Tests)",
   "main": "assets/js/main.js",
   "type": "module",
   "scripts": {
     "test": "node --test tests/unit/*.test.js",
+    "test:smoke": "node tests/smoke/ui-smoke.js",
     "test:coverage": "node --test --experimental-test-coverage tests/unit/*.test.js",
     "test:watch": "node --test --watch tests/unit/*.test.js",
-    "check:syntax": "node --check assets/js/main.js && node --check assets/js/contact.js && node --check assets/js/ai-widget.js && node --check assets/js/script.js && node --check scripts/serve.js",
+    "build:pdf": "node scripts/generate-pdf.js",
+    "check:syntax": "node --check assets/js/main.js && node --check assets/js/contact.js && node --check assets/js/script.js && node --check assets/js/ai-widget.js && node --check sw.js && node --check scripts/serve.js && node --check scripts/generate-pdf.js && node --check tests/smoke/ui-smoke.js",
     "check": "npm run check:syntax && npm test",
     "prepare": "git config core.hooksPath .githooks || true",
     "audit:lighthouse": "lhci autorun",
     "serve": "node scripts/serve.js",
     "dev": "node scripts/serve.js",
+    "dev:docker": "docker compose up",
+    "preview:share": "powershell -ExecutionPolicy Bypass -File scripts/preview-tunnel.ps1",
+    "tunnel": "powershell -ExecutionPolicy Bypass -File scripts/preview-tunnel.ps1",
     "media:r2": "php scripts/migrate-to-r2.php"
   },
   "devDependencies": {
