@@ -4,7 +4,8 @@
  * Skumulowane najlepsze praktyki z FuegoLingua, TwojaStronaWWW, KatoSalsaHub & _site-template:
  * - Architektura Platform-First & Zero-Bloat (Vanilla ES6+, 100% Separation of Concerns - brak stylów inline)
  * - Komunikacja z centralnym routerem AI na VPS (https://ai.twojastronawww.pl/chat-router.php)
- * - Obsługa 7-modelowej kaskady High-Availability po stronie VPS
+ * - Obsługa 11-modelowej kaskady High-Availability (6 dostawców API) po stronie VPS
+ * - Priorytetowe przekazywanie leadów kontaktowych (telefon / e-mail omija cache i wyzwala Ntfy 1-Klik)
  * - Dynamiczne Centrum Wiedzy ze strony i bazy JSON/Wiki z wyszukiwaniem fleksyjnym
  * - Dwupoziomowy Response Cache (pamięć podręczna zapytań) z automatyczną inwalidacją (kbVersion)
  * - Pamięć rozmowy Multi-Turn (do 8 ostatnich wiadomości w sessionStorage)
@@ -400,7 +401,7 @@ export function getLocalFallbackAnswer(question, siteId = 'fuegolingua', knowled
   }
 
   if (q.includes('ai') || q.includes('czat') || q.includes('bot') || q.includes('asystent') || q.includes('rag')) {
-    return 'Wdrażamy dedykowanych **Asystentów AI z bazą wiedzy firmy (RAG)** zintegrowanych z centralną bramką kaskadową (7 modeli LLM, pamięć podręczna zapytań):\n- Koszt wdrożenia: **od 900 PLN netto** (jednorazowa konfiguracja)\n- Działa **24/7**, odpowiada w ułamku sekundy z pamięci podręcznej i korzysta z darmowych pul API\n- Automatycznie przesyła powiadomienia na telefon, gdy klient zostawi namiar kontaktowy.';
+    return 'Wdrażamy dedykowanych **Asystentów AI z bazą wiedzy firmy (RAG)** zintegrowanych z centralną bramką kaskadową (11 modeli LLM, pamięć podręczna zapytań `< 5 ms`):\n- Koszt wdrożenia: **od 900 PLN netto** (jednorazowa konfiguracja)\n- Działa **24/7**, odpowiada w ułamku sekundy z pamięci podręcznej i korzysta z darmowych pul API\n- Automatycznie przesyła powiadomienia na telefon (z numerem telefonu i e-mailem na samej górze wiadomości), gdy klient zostawi namiar kontaktowy.';
   }
 
   if (q.includes('cen') || q.includes('koszt') || q.includes('ile ') || q.includes('pakiet') || q.includes('wycen')) {
@@ -494,7 +495,7 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
   function hasContactPii(text) {
     const s = String(text || '');
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-    const phoneRegex = /(?:\+?48[\s-]?)?(?:\d[\s-]?){8}\d/;
+    const phoneRegex = /(?:\+?48[\s.\-()]*)?(?:\d[\s.\-()]*){8}\d/;
     return emailRegex.test(s) || phoneRegex.test(s);
   }
 

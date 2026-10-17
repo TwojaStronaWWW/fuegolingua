@@ -111,4 +111,27 @@ describe('Widget Asystenta AI v3.0 (assets/js/ai-widget.js)', () => {
     widget.clearBtn.dispatchEvent({ type: 'click' });
     assert.equal(widget.getHistory().length, 0);
   });
+
+  test('sendQuestion omija pamięć podręczną (Response Cache) dla leadów z numerem telefonu lub e-mailem (gwarancja Ntfy 1-Klik)', async () => {
+    let fetchCalls = 0;
+    dom.mockWindow.fetch = async () => {
+      fetchCalls++;
+      return {
+        ok: true,
+        json: async () => ({
+          success: true,
+          answer: 'Dziękuję! Zapisałam Twój kontakt i oddzwonię.'
+        })
+      };
+    };
+
+    const widget = initAiWidget(dom.mockDocument, dom.mockWindow);
+    await widget.sendQuestion('Proszę o kontakt na +48 (600) 700 800 lub anna@firma.pl');
+    assert.equal(fetchCalls, 1);
+    assert.equal(widget.getCachedAnswer('Proszę o kontakt na +48 (600) 700 800 lub anna@firma.pl'), null);
+
+    await widget.sendQuestion('Proszę o kontakt na +48 (600) 700 800 lub anna@firma.pl');
+    assert.equal(fetchCalls, 2);
+  });
 });
+
