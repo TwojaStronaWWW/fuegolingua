@@ -922,6 +922,30 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
     chipsContainer.style.display = visible ? 'flex' : 'none';
   }
 
+  const analyticsUrl = routerUrl.replace(/\/chat-router\.php.*$/, '/analytics');
+
+  function sendAnalyticsBeacon(extra) {
+    try {
+      const nav = win?.navigator || (typeof navigator !== 'undefined' ? navigator : null);
+      if (!nav || typeof nav.sendBeacon !== 'function' || nav.doNotTrack === '1' || win?.doNotTrack === '1') {
+        return;
+      }
+      const loc = win?.location || {};
+      const params = new URLSearchParams(loc.search || '');
+      const rawPath = (loc.pathname || '/') + (loc.hash || '');
+      const payload = Object.assign({
+        site_id: siteId,
+        type: 'pageview',
+        path: rawPath || '/',
+        referrer: doc?.referrer || '',
+        utm_source: params.get('utm_source') || '',
+        utm_term: params.get('utm_term') || params.get('q') || ''
+      }, extra || {});
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      nav.sendBeacon(analyticsUrl, blob);
+    } catch (_) {}
+  }
+
   function renderChips() {
     if (!chipsContainer) return;
     chipsContainer.innerHTML = '';
@@ -936,6 +960,7 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
       chip.className = 'tsw-ai-chip';
       chip.textContent = promptText;
       chip.addEventListener('click', () => {
+        sendAnalyticsBeacon({ type: 'event', event: 'quick_prompt_click' });
         sendQuestion(promptText);
       });
       chipsContainer.appendChild(chip);
@@ -962,6 +987,7 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
     toggleBtn.setAttribute('aria-expanded', String(isOpen));
     if (isOpen) {
       chatInput?.focus?.();
+      sendAnalyticsBeacon({ type: 'event', event: 'chat_open' });
       if (kbUrl || kbApiUrl) {
         refreshKnowledge();
       }
@@ -1094,6 +1120,57 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
   });
 
   renderInitialView();
+
+  if (win && !win.__TSW_ANALYTICS_ACTIVE__ && typeof win.navigator?.sendBeacon === 'function') {
+    win.__TSW_ANALYTICS_ACTIVE__ = true;
+    let lcpMeasured = 0;
+    try {
+      if (typeof PerformanceObserver !== 'undefined') {
+        const po = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          if (entries && entries.length > 0) {
+            lcpMeasured = Math.round(entries[entries.length - 1].startTime || 0);
+          }
+        });
+        po.observe({ type: 'largest-contentful-paint', buffered: true });
+      }
+    } catch (_) {}
+
+    setTimeout(() => {
+      sendAnalyticsBeacon(lcpMeasured > 0 ? { type: 'pageview', lcp_ms: lcpMeasured } : { type: 'pageview' });
+    }, 600);
+
+    win.addEventListener?.('hashchange', () => {
+      sendAnalyticsBeacon({ type: 'pageview' });
+    });
+
+    setTimeout(() => {
+      if (doc.visibilityState !== 'hidden') {
+        sendAnalyticsBeacon({ type: 'engaged' });
+      }
+    }, 15000);
+
+    doc.addEventListener?.('click', (e) => {
+      const target = e?.target?.closest ? e.target : null;
+      if (!target) return;
+      const link = target.closest('a[href]');
+      if (link) {
+        const href = String(link.getAttribute('href') || '');
+        if (href.startsWith('tel:')) {
+          sendAnalyticsBeacon({ type: 'event', event: 'cta_phone_click' });
+        } else if (href.startsWith('mailto:')) {
+          sendAnalyticsBeacon({ type: 'event', event: 'cta_email_click' });
+        }
+      }
+    });
+
+    doc.addEventListener?.('submit', (e) => {
+      const form = e?.target;
+      if (form && form.id !== 'tsw-ai-form' && (form.id === 'contactForm' || form.classList?.contains?.('contact-form'))) {
+        sendAnalyticsBeacon({ type: 'event', event: 'contact_form_submit' });
+      }
+    });
+  }
 
   if ((kbUrl || kbApiUrl) && knowledgeEntries.length === 0 && !options.skipInitialFetch) {
     refreshKnowledge();
