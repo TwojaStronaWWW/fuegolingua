@@ -3,7 +3,7 @@
  * Strategia: Stale-While-Revalidate dla zasobów statycznych.
  */
 
-const CACHE_NAME = 'fuegolingua-v2';
+const CACHE_NAME = 'fuegolingua-v3';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -14,7 +14,7 @@ const PRECACHE_ASSETS = [
   './assets/css/cennik.css',
   './assets/js/main.js',
   './assets/js/contact.js',
-  './assets/js/ai-widget.js',
+  './assets/js/ai-widget.js?v=4.4',
 ];
 
 self.addEventListener('install', (event) => {
