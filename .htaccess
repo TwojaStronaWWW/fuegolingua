@@ -1,5 +1,12 @@
 Options -Indexes
 
+# Kanoniczny adres bez www (301 Moved Permanently – eliminacja duplikacji w Google Search Console)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+</IfModule>
+
 AddDefaultCharset UTF-8
 AddType 'text/html; charset=UTF-8' html
 AddType 'text/css; charset=UTF-8' css
@@ -10,10 +17,13 @@ AddType 'image/webp' webp
 
 # Nagłówki bezpieczeństwa OWASP / ISO 27001 oraz Cache-Control (microphone=(self) dla dyktowania głosowego w Asystencie AI)
 <IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set Content-Security-Policy "frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "geolocation=(), microphone=(self), camera=()"
+  Header unset X-Powered-By
   Header unset ETag
 
   <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|webp|svg|woff2|js|css|swf)$">

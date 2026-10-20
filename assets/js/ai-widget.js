@@ -1100,9 +1100,6 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
   function sendAnalyticsBeacon(extra) {
     try {
       const nav = win?.navigator || (typeof navigator !== 'undefined' ? navigator : null);
-      if (!nav || typeof nav.sendBeacon !== 'function' || nav.doNotTrack === '1' || win?.doNotTrack === '1') {
-        return;
-      }
       const loc = win?.location || {};
       const params = new URLSearchParams(loc.search || '');
       const rawPath = (loc.pathname || '/') + (loc.hash || '');
@@ -1114,8 +1111,23 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
         utm_source: params.get('utm_source') || '',
         utm_term: params.get('utm_term') || params.get('q') || ''
       }, extra || {});
-      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-      nav.sendBeacon(analyticsUrl, blob);
+      const body = JSON.stringify(payload);
+      let sent = false;
+      if (nav && typeof nav.sendBeacon === 'function') {
+        try {
+          sent = nav.sendBeacon(analyticsUrl, body);
+        } catch (_) {}
+      }
+      const fetchFn = win?.fetch || globalThis.fetch;
+      if (!sent && typeof fetchFn === 'function') {
+        fetchFn(analyticsUrl, {
+          method: 'POST',
+          body,
+          keepalive: true,
+          mode: 'cors',
+          credentials: 'omit'
+        }).catch(() => {});
+      }
     } catch (_) {}
   }
 
@@ -1300,7 +1312,7 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
 
   renderInitialView();
 
-  if (win && !win.__TSW_ANALYTICS_ACTIVE__ && typeof win.navigator?.sendBeacon === 'function') {
+  if (win && !win.__TSW_ANALYTICS_ACTIVE__ && (typeof win.navigator?.sendBeacon === 'function' || typeof win.fetch === 'function')) {
     win.__TSW_ANALYTICS_ACTIVE__ = true;
     let lcpMeasured = 0;
     try {
@@ -1386,10 +1398,22 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
   };
 }
 
-if (typeof document !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => initAiWidget(document, globalThis.window));
-  } else {
+function autoInitAiWidget() {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById('tsw-ai-widget-root')) return;
+  if (document.body) {
     initAiWidget(document, globalThis.window);
+  }
+}
+
+if (typeof document !== 'undefined') {
+  if (document.body) {
+    autoInitAiWidget();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInitAiWidget);
+  }
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('load', autoInitAiWidget);
   }
 }
