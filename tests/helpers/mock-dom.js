@@ -67,6 +67,12 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
           if (ariaExpanded) child.setAttribute('aria-expanded', ariaExpanded[1]);
           const ariaLabel = attrs.match(/\baria-label=["']([^"']+)["']/);
           if (ariaLabel) child.setAttribute('aria-label', ariaLabel[1]);
+          const ariaPressed = attrs.match(/\baria-pressed=["']([^"']+)["']/);
+          if (ariaPressed) child.setAttribute('aria-pressed', ariaPressed[1]);
+          const placeholder = attrs.match(/\bplaceholder=["']([^"']+)["']/);
+          if (placeholder) child.setAttribute('placeholder', placeholder[1]);
+          const titleAttr = attrs.match(/\btitle=["']([^"']+)["']/);
+          if (titleAttr) child.setAttribute('title', titleAttr[1]);
           child.parentNode = this;
           this.children.push(child);
           elements.set(child.id, child);
@@ -116,6 +122,9 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
       const fns = this._listeners.get(evt.type) || [];
       fns.forEach(fn => fn.call(this, evt));
       return true;
+    }
+    click() {
+      this.dispatchEvent({ type: 'click', target: this });
     }
     focus() { this._focused = true; }
     reset() { this.value = ''; }

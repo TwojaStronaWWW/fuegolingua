@@ -3,7 +3,7 @@
  * Strategia: Stale-While-Revalidate dla zasobów statycznych.
  */
 
-const CACHE_NAME = 'fuegolingua-v1';
+const CACHE_NAME = 'fuegolingua-v2';
 const PRECACHE_ASSETS = [
   './',
   './index.html',

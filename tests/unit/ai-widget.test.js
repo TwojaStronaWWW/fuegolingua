@@ -133,5 +133,60 @@ describe('Widget Asystenta AI v3.0 (assets/js/ai-widget.js)', () => {
     await widget.sendQuestion('Proszę o kontakt na +48 (600) 700 800 lub anna@firma.pl');
     assert.equal(fetchCalls, 2);
   });
+
+  test('Dyktowanie głosowe (Web Speech API — Tryb Bezpieczny): rozpoznaje mowę po polsku na żywo do pola tekstowego bez automatycznego wysyłania', () => {
+    let lastInstance = null;
+    dom.mockWindow.webkitSpeechRecognition = class MockSpeechRecognition {
+      constructor() {
+        this.lang = '';
+        this.continuous = true;
+        this.interimResults = false;
+        this.maxAlternatives = 1;
+        this.started = false;
+        lastInstance = this;
+      }
+      start() {
+        this.started = true;
+        if (typeof this.onstart === 'function') this.onstart();
+      }
+      stop() {
+        this.started = false;
+        if (typeof this.onend === 'function') this.onend();
+      }
+    };
+
+    const widget = initAiWidget(dom.mockDocument, dom.mockWindow);
+
+    assert.ok(widget.voiceBtn, 'Przycisk mikrofonu #tswAiVoiceBtn musi istnieć w formularzu czatu');
+    assert.equal(widget.voiceBtn.getAttribute('aria-pressed'), 'false');
+    assert.equal(widget.isVoiceListening(), false);
+
+    // 1. Kliknięcie mikrofonu uruchamia nasłuchiwanie pl-PL z interimResults=true
+    widget.voiceBtn.click();
+    assert.ok(lastInstance, 'Instancja SpeechRecognition powinna zostać utworzona');
+    assert.equal(lastInstance.lang, 'pl-PL');
+    assert.equal(lastInstance.interimResults, true);
+    assert.equal(lastInstance.continuous, false);
+    assert.equal(widget.isVoiceListening(), true);
+    assert.equal(widget.voiceBtn.getAttribute('aria-pressed'), 'true');
+    assert.equal(widget.voiceBtn.classList.contains('tsw-listening'), true);
+
+    // 2. Transkrypcja na żywo (interim) wpisuje tekst do pola #tswAiInput
+    lastInstance.onresult({
+      results: [
+        Object.assign([{ transcript: 'Ile kosztuje ' }], { isFinal: true }),
+        Object.assign([{ transcript: 'kurs hiszpańskiego' }], { isFinal: false })
+      ]
+    });
+    assert.equal(widget.chatInput.value, 'Ile kosztuje kurs hiszpańskiego');
+
+    // 3. Zakończenie wypowiedzi wyłącza mikrofon, ale zostawia tekst w polu do weryfikacji przed wysłaniem
+    lastInstance.stop();
+    assert.equal(widget.isVoiceListening(), false);
+    assert.equal(widget.voiceBtn.getAttribute('aria-pressed'), 'false');
+    assert.equal(widget.voiceBtn.classList.contains('tsw-listening'), false);
+    assert.equal(widget.chatInput.value, 'Ile kosztuje kurs hiszpańskiego');
+    assert.equal(widget.getHistory().length, 0, 'Tryb bezpieczny nie może wysłać wiadomości automatycznie bez kliknięcia Wyślij');
+  });
 });
 

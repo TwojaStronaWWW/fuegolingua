@@ -125,6 +125,8 @@ describe('Integralność semantyczna i standardy HTML5 (FuegoLingua.pl)', () => 
       assert.match(content, /ai-widget\.js[^>]*data-site-id=["']fuegolingua["']/i, `Brak podpięcia Asystenta AI w ${name}`);
     }
     assert.doesNotMatch(indexContent, /<!-- test -p->/i, 'index.html zawiera śmieciowy komentarz testowy');
+    const htaccess = fs.readFileSync(path.join(ROOT_DIR, '.htaccess'), 'utf8');
+    assert.match(htaccess, /microphone=\(self\)/, 'Nagłówek Permissions-Policy w .htaccess musi zezwalać na microphone=(self) dla dyktowania głosowego w Asystencie AI');
   });
 
   test('Optymalizacja pierwszego ładowania: preconnect do CDN, subsetting ikon oraz lazy-loading orbity 3D', () => {

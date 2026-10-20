@@ -763,6 +763,50 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
     .tsw-ai-input:focus {
       border-color: #ffd43b;
     }
+    .tsw-ai-input.tsw-input-listening {
+      border-color: #c92a2a;
+      box-shadow: 0 0 0 2px rgba(201, 42, 42, 0.25);
+    }
+    .tsw-ai-voice-btn {
+      width: 40px;
+      min-width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .tsw-ai-voice-btn:hover,
+    .tsw-ai-voice-btn:focus-visible {
+      background: rgba(255, 212, 59, 0.14);
+      border-color: #ffd43b;
+      color: #ffd43b;
+      outline: none;
+    }
+    .tsw-ai-voice-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+      pointer-events: none;
+    }
+    .tsw-ai-voice-btn.tsw-listening {
+      background: linear-gradient(135deg, #c92a2a 0%, #e8590c 100%);
+      border-color: rgba(255, 255, 255, 0.5);
+      color: #ffffff;
+      animation: tswVoicePulse 1.3s infinite ease-in-out;
+    }
+    @keyframes tswVoicePulse {
+      0% { box-shadow: 0 0 0 0 rgba(201, 42, 42, 0.65); }
+      70% { box-shadow: 0 0 0 8px rgba(201, 42, 42, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(201, 42, 42, 0); }
+    }
     .tsw-ai-send {
       background: linear-gradient(135deg, #c92a2a 0%, #e8590c 100%);
       border: 1px solid rgba(255, 212, 59, 0.5);
@@ -790,6 +834,7 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
 
   const root = doc.createElement('div');
   root.id = 'tsw-ai-widget-root';
+  root.setAttribute('data-nosnippet', '');
   root.innerHTML = `
     <button type="button" class="tsw-ai-btn" id="tswAiToggleBtn" aria-label="Otwórz czat z asystentem Fuego Lingua" aria-expanded="false" aria-controls="tswAiWindow">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
@@ -811,7 +856,10 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
       <div class="tsw-ai-chips" id="tswAiChips"></div>
 
       <form class="tsw-ai-input-bar" id="tswAiForm">
-        <input type="text" class="tsw-ai-input" id="tswAiInput" placeholder="Napisz pytanie o kurs lub cennik..." aria-label="Zadaj pytanie asystentowi" required autocomplete="off" />
+        <input type="text" class="tsw-ai-input" id="tswAiInput" placeholder="Napisz pytanie o kurs lub cennik..." aria-label="Zadaj pytanie asystentowi" maxlength="500" required autocomplete="off" />
+        <button type="button" class="tsw-ai-voice-btn" id="tswAiVoiceBtn" title="Zadaj pytanie głosem (mikrofon)" aria-label="Zadaj pytanie głosem" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+        </button>
         <button type="submit" class="tsw-ai-send" id="tswAiSendBtn">Wyślij</button>
       </form>
     </div>
@@ -824,9 +872,134 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
   const chatWindow = doc.getElementById('tswAiWindow');
   const chatForm = doc.getElementById('tswAiForm');
   const chatInput = doc.getElementById('tswAiInput');
+  const voiceBtn = doc.getElementById('tswAiVoiceBtn');
   const messagesContainer = doc.getElementById('tswAiMessages');
   const chipsContainer = doc.getElementById('tswAiChips');
   const sendBtn = doc.getElementById('tswAiSendBtn');
+
+  // Obsługa dyktowania głosowego (Web Speech API — Tryb Bezpieczny: tekst trafia na żywo do pola tekstowego)
+  const defaultPlaceholder = chatInput?.getAttribute('placeholder') || 'Napisz pytanie o kurs lub cennik...';
+  const SpeechRecognitionCtor = win?.SpeechRecognition || win?.webkitSpeechRecognition || null;
+  let recognition = null;
+  let isListening = false;
+  let voiceBaseText = '';
+  let lastVoiceErrorPlaceholder = '';
+
+  function setVoiceListeningState(active, customPlaceholder = '') {
+    isListening = Boolean(active);
+    if (voiceBtn) {
+      voiceBtn.classList.toggle('tsw-listening', isListening);
+      voiceBtn.setAttribute('aria-pressed', String(isListening));
+      voiceBtn.setAttribute(
+        'title',
+        isListening ? 'Zatrzymaj dyktowanie (Słucham...)' : 'Zadaj pytanie głosem (mikrofon)'
+      );
+      voiceBtn.setAttribute(
+        'aria-label',
+        isListening ? 'Zatrzymaj dyktowanie głosowe' : 'Zadaj pytanie głosem'
+      );
+    }
+    if (chatInput) {
+      chatInput.classList.toggle('tsw-input-listening', isListening);
+      chatInput.setAttribute(
+        'placeholder',
+        customPlaceholder || (isListening ? '🎙️ Słucham... mów teraz po polsku' : defaultPlaceholder)
+      );
+    }
+  }
+
+  function stopVoiceRecognition() {
+    lastVoiceErrorPlaceholder = '';
+    if (recognition && isListening) {
+      try {
+        recognition.stop();
+      } catch (_) {}
+    }
+    setVoiceListeningState(false);
+  }
+
+  function toggleVoiceRecognition() {
+    if (isListening) {
+      stopVoiceRecognition();
+      chatInput?.focus?.();
+      return false;
+    }
+
+    const Ctor = win?.SpeechRecognition || win?.webkitSpeechRecognition || SpeechRecognitionCtor;
+    if (typeof Ctor !== 'function') {
+      setVoiceListeningState(false, 'Dyktowanie głosowe wymaga Chrome, Edge lub Safari');
+      chatInput?.focus?.();
+      return false;
+    }
+
+    try {
+      if (!recognition) {
+        recognition = new Ctor();
+        recognition.lang = 'pl-PL';
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+          lastVoiceErrorPlaceholder = '';
+          setVoiceListeningState(true);
+        };
+
+        recognition.onresult = (event) => {
+          if (!chatInput || !event || !event.results) return;
+          lastVoiceErrorPlaceholder = '';
+          let finalChunk = '';
+          let interimChunk = '';
+          for (let i = 0; i < event.results.length; i++) {
+            const res = event.results[i];
+            const transcript = res && res[0] && res[0].transcript ? String(res[0].transcript) : '';
+            if (res.isFinal) {
+              finalChunk += transcript;
+            } else {
+              interimChunk += transcript;
+            }
+          }
+          const spoken = (finalChunk + interimChunk).replace(/\s+/g, ' ').trim();
+          const combined = [voiceBaseText, spoken].filter(Boolean).join(' ').slice(0, 500);
+          chatInput.value = combined;
+        };
+
+        recognition.onerror = (event) => {
+          const code = event?.error || '';
+          if (code === 'not-allowed' || code === 'service-not-allowed') {
+            lastVoiceErrorPlaceholder = '⚠️ Zezwól na mikrofon (ikona obok adresu URL)';
+          } else if (code === 'audio-capture') {
+            lastVoiceErrorPlaceholder = '⚠️ Nie wykryto mikrofonu w urządzeniu';
+          } else if (code === 'no-speech') {
+            lastVoiceErrorPlaceholder = '🎙️ Nie usłyszałem głosu — kliknij mikrofon ponownie';
+          } else if (code === 'network') {
+            lastVoiceErrorPlaceholder = '⚠️ Przeglądarka blokuje usługę mowy (np. tarcza Brave)';
+          } else {
+            lastVoiceErrorPlaceholder = defaultPlaceholder;
+          }
+          setVoiceListeningState(false, lastVoiceErrorPlaceholder);
+        };
+
+        recognition.onend = () => {
+          setVoiceListeningState(false, lastVoiceErrorPlaceholder || defaultPlaceholder);
+          if (chatInput?.value) {
+            chatInput?.focus?.();
+          }
+        };
+      }
+
+      lastVoiceErrorPlaceholder = '';
+      voiceBaseText = String(chatInput?.value || '').trim();
+      setVoiceListeningState(true);
+      recognition.start();
+      return true;
+    } catch (_) {
+      setVoiceListeningState(false);
+      return false;
+    }
+  }
+
+  voiceBtn?.addEventListener('click', toggleVoiceRecognition);
 
   let conversationHistory = [];
   try {
@@ -991,11 +1164,14 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
       if (kbUrl || kbApiUrl) {
         refreshKnowledge();
       }
+    } else {
+      stopVoiceRecognition();
     }
   }
 
   function closeChat() {
     if (!chatWindow || !toggleBtn) return;
+    stopVoiceRecognition();
     chatWindow.classList.remove('tsw-open');
     toggleBtn.setAttribute('aria-expanded', 'false');
     toggleBtn.focus?.();
@@ -1004,6 +1180,7 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
   toggleBtn?.addEventListener('click', toggleChat);
   closeBtn?.addEventListener('click', closeChat);
   clearBtn?.addEventListener('click', () => {
+    stopVoiceRecognition();
     conversationHistory = [];
     saveHistory();
     renderInitialView();
@@ -1029,6 +1206,8 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
   async function sendQuestion(text) {
     const trimmed = String(text || '').trim();
     if (!trimmed || sendBtn?.disabled) return;
+
+    stopVoiceRecognition();
 
     if (Array.isArray(win?.AppState?.terms) && win.AppState.terms.length > 0) {
       updateKnowledgeEntries(win.AppState.terms);
@@ -1184,12 +1363,16 @@ export function initAiWidget(doc = document, win = globalThis.window, options = 
     chatWindow,
     chatForm,
     chatInput,
+    voiceBtn,
     messagesContainer,
     chipsContainer,
     sendBtn,
     toggleChat,
     closeChat,
     sendQuestion,
+    toggleVoiceRecognition,
+    stopVoiceRecognition,
+    isVoiceListening: () => isListening,
     getHistory: () => conversationHistory,
     getKnowledgeVersion: () => kbVersion,
     getKnowledgeEntries: () => knowledgeEntries,
