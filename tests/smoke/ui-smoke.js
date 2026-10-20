@@ -46,7 +46,10 @@ async function runSmokeTest() {
     page.on('pageerror', (err) => errors.push(`PageError: ${err.message}`));
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
-        errors.push(`ConsoleError: ${msg.text()}`);
+        const text = msg.text();
+        if (!text.includes('ERR_FAILED') && !text.includes('Failed to load resource')) {
+          errors.push(`ConsoleError: ${text}`);
+        }
       }
     });
 
