@@ -8,15 +8,16 @@ declare(strict_types=1);
 function rate_limit(string $key, int $limit, int $seconds): bool {
     $dir = __DIR__ . '/rate_limits';
     if (!file_exists($dir)) {
-        if (!mkdir($dir, 0755, true)) {
+        if (!@mkdir($dir, 0755, true)) {
             $dir = sys_get_temp_dir();
         } else {
-            file_put_contents($dir . '/.htaccess', "Deny from all\n");
-            file_put_contents($dir . '/index.html', "");
+            @file_put_contents($dir . '/.htaccess', "Deny from all\n");
+            @file_put_contents($dir . '/index.html', "");
         }
     }
 
-    $sanitizedKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
+    // Hashujemy klucz (np. zanonimizowane IP + akcja), aby uniknąć kolizji oktetów IPv4 i nie przechowywać IP w nazwach plików (RODO)
+    $sanitizedKey = preg_replace('/[^a-zA-Z0-9_]/', '', substr($key, 0, 24)) . '_' . substr(hash('sha256', $key), 0, 16);
     $file = $dir . '/rate_' . $sanitizedKey . '.json';
 
     // Garbage Collector (1% prawdopodobieństwa)
@@ -25,7 +26,7 @@ function rate_limit(string $key, int $limit, int $seconds): bool {
         if (is_array($files)) {
             $now = time();
             foreach ($files as $f) {
-                if ($now - filemtime($f) > 3600) {
+                if ($now - (int)@filemtime($f) > 3600) {
                     @unlink($f);
                 }
             }
@@ -33,12 +34,12 @@ function rate_limit(string $key, int $limit, int $seconds): bool {
     }
 
     // Otwarcie pliku z blokadą wyłączną (exclusive lock)
-    $fp = @fopen($file, 'c+');
+    $fp = @fopen($file, 'c+b');
     if (!$fp) {
         return true; // Fail-open w razie problemów z systemem plików
     }
 
-    if (!flock($fp, LOCK_EX)) {
+    if (!@flock($fp, LOCK_EX)) {
         fclose($fp);
         return true;
     }
@@ -62,7 +63,7 @@ function rate_limit(string $key, int $limit, int $seconds): bool {
     }
 
     if ((int)$current['count'] >= $limit) {
-        flock($fp, LOCK_UN);
+        @flock($fp, LOCK_UN);
         fclose($fp);
         return false;
     }
@@ -71,9 +72,10 @@ function rate_limit(string $key, int $limit, int $seconds): bool {
 
     ftruncate($fp, 0);
     rewind($fp);
-    fwrite($fp, json_encode($current));
+    fwrite($fp, (string)json_encode($current));
+    fflush($fp);
 
-    flock($fp, LOCK_UN);
+    @flock($fp, LOCK_UN);
     fclose($fp);
 
     return true;

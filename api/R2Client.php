@@ -5,10 +5,12 @@ namespace TwojaStronaWWW\Api;
 
 /**
  * Lekki, bezbiblioteczny klient Cloudflare R2 oparty na autoryzacji AWS S3 SigV4.
- * Zero zewnetrznych zaleznosci (brak aws-sdk, brak guzzle).
+ * Zero zewnętrznych zależności (brak aws-sdk, brak guzzle).
  */
 class R2Client
 {
+    public const MAX_RESPONSE_BYTES = 10485760;
+
     private string $accountId;
     private string $accessKeyId;
     private string $secretAccessKey;
@@ -42,7 +44,7 @@ class R2Client
     }
 
     /**
-     * Wysyla plik do bucketu Cloudflare R2.
+     * Wysyła plik do bucketu Cloudflare R2.
      */
     public function putObject(string $key, string $content, string $contentType = 'application/octet-stream'): bool
     {
@@ -59,12 +61,51 @@ class R2Client
             return true;
         }
 
-        $this->lastError = "Blad przesylania R2 HTTP {$response['status']}: {$response['body']}";
+        $this->lastError = "Błąd przesyłania R2 HTTP {$response['status']}: {$response['body']}";
         return false;
     }
 
     /**
-     * Sprawdza polaczenie z bucketem.
+     * Pobiera zawartość obiektu z Cloudflare R2.
+     */
+    public function getObject(string $key): ?string
+    {
+        $this->lastError = null;
+        $this->lastStatusCode = null;
+
+        $key = ltrim($key, '/');
+        $host = "{$this->accountId}.r2.cloudflarestorage.com";
+        $uri = '/' . rawurlencode($this->bucketName) . '/' . $this->encodeKey($key);
+
+        $response = $this->sendRequest('GET', $host, $uri, '', 'application/octet-stream');
+
+        if ($response['status'] >= 200 && $response['status'] < 300) {
+            return $response['body'];
+        }
+
+        $this->lastError = "Błąd odczytu R2 HTTP {$response['status']}: {$response['body']}";
+        return null;
+    }
+
+    /**
+     * Sprawdza, czy obiekt istnieje w Cloudflare R2 (żądanie HEAD).
+     */
+    public function hasObject(string $key): bool
+    {
+        $this->lastError = null;
+        $this->lastStatusCode = null;
+
+        $key = ltrim($key, '/');
+        $host = "{$this->accountId}.r2.cloudflarestorage.com";
+        $uri = '/' . rawurlencode($this->bucketName) . '/' . $this->encodeKey($key);
+
+        $response = $this->sendRequest('HEAD', $host, $uri, '', 'application/octet-stream');
+
+        return $response['status'] >= 200 && $response['status'] < 300;
+    }
+
+    /**
+     * Sprawdza połączenie z bucketem.
      */
     public function testConnection(): bool
     {
@@ -164,8 +205,18 @@ class R2Client
         curl_setopt($ch, CURLOPT_HTTPHEADER, $curlHeaders);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 0);
+        if (defined('CURLPROTO_HTTPS')) {
+            curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+            curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+        }
 
-        if ($method === 'PUT') {
+        if ($method === 'HEAD') {
+            curl_setopt($ch, CURLOPT_NOBODY, true);
+        } elseif ($method === 'PUT' || $method === 'POST') {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         }
 

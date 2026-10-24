@@ -1,5 +1,5 @@
 /**
- * Headless Browser UI Smoke Test (FuegoLingua & TwojaStronaWWW)
+ * Headless Browser UI Smoke Test (Wzorzec Kato Salsa Hub & FuegoLingua)
  * Weryfikuje poprawność renderowania strony głównej i brak błędów runtime JS.
  * Jeśli pakiet playwright nie jest zainstalowany lokalnie, kończy się bezpiecznym pominięciem (graceful skip).
  */
@@ -28,11 +28,12 @@ async function runSmokeTest() {
   const baseUrl = `http://127.0.0.1:${address.port}`;
 
   let browser;
+  let page;
   const errors = [];
 
   try {
     browser = await playwright.chromium.launch({ headless: true });
-    const page = await browser.newPage();
+    page = await browser.newPage();
 
     await page.route('**/*', (route) => {
       const url = route.request().url();
@@ -71,6 +72,11 @@ async function runSmokeTest() {
   } catch (err) {
     fs.mkdirSync(DIAG_DIR, { recursive: true });
     fs.writeFileSync(path.join(DIAG_DIR, 'smoke-error.log'), String(err.stack || err.message), 'utf-8');
+    if (page) {
+      try {
+        await page.screenshot({ path: path.join(DIAG_DIR, 'failure.png'), fullPage: true });
+      } catch {}
+    }
     console.error('❌ [UI Smoke Test] BŁĄD:', err.message);
     process.exitCode = 1;
   } finally {

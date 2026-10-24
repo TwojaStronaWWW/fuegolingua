@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: 1.1 Pobranie kodu repozytorium
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: 1.2 Sprawdzenie pliku wejściowego (index.html lub index.php)
         run: |
@@ -87,6 +89,8 @@ jobs:
     steps:
       - name: 2.1 Pobranie kodu repozytorium
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: 2.2 Konfiguracja środowiska Node.js
         uses: actions/setup-node@v4
@@ -115,6 +119,8 @@ jobs:
     steps:
       - name: 3.1 Pobranie kodu repozytorium
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: 3.2 Konfiguracja środowiska Node.js
         uses: actions/setup-node@v4

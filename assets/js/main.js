@@ -247,6 +247,23 @@ export function initLightbox(doc = document) {
   return { modal, items, openLightbox, closeLightbox, showNext, showPrev, keyHandler, getCurrentIndex: () => currentIndex };
 }
 
+export function initServiceWorker(doc = document, win = typeof window !== 'undefined' ? window : null) {
+  const nav = win?.navigator || (typeof navigator !== 'undefined' ? navigator : null);
+  if (!nav || !('serviceWorker' in nav) || !nav.serviceWorker) return null;
+  const port = win?.location?.port || '';
+  if ((port === '5500' || port === '5501') && typeof nav.serviceWorker.getRegistrations === 'function') {
+    nav.serviceWorker.getRegistrations().then(regs => {
+      for (const r of regs) r.unregister();
+    }).catch(() => {});
+    return { mode: 'unregistered-dev' };
+  }
+  if (typeof nav.serviceWorker.register === 'function') {
+    nav.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
+    return { mode: 'registered' };
+  }
+  return null;
+}
+
 // Inicjalizacja w przeglądarce
 if (typeof document !== 'undefined') {
   const runInit = () => {
@@ -255,6 +272,7 @@ if (typeof document !== 'undefined') {
     initTabs(document);
     initLightbox(document);
     initScrollAnimations(document);
+    initServiceWorker(document);
   };
 
   if (document.readyState === 'loading') {

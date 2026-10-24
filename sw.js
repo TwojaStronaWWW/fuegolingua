@@ -1,9 +1,9 @@
 /**
- * FuegoLingua — Service Worker (PWA Offline Support)
- * Strategia: Stale-While-Revalidate dla zasobów statycznych.
+ * FuegoLingua — Service Worker (PWA Offline Support — Hybrid Strategy)
+ * Strategia: Network-First dla kodu (.html, .css, .js, .json) + Stale-While-Revalidate dla mediów.
  */
 
-const CACHE_NAME = 'fuegolingua-v3';
+const CACHE_NAME = 'fuegolingua-v4';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -14,7 +14,7 @@ const PRECACHE_ASSETS = [
   './assets/css/cennik.css',
   './assets/js/main.js',
   './assets/js/contact.js',
-  './assets/js/ai-widget.js?v=4.4',
+  './assets/js/ai-widget.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -47,6 +47,32 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.includes('/api/') || url.pathname.endsWith('.php')) return;
+
+  const isCodeOrData =
+    request.mode === 'navigate' ||
+    url.pathname === '/' ||
+    /\.(html|css|js|mjs|json)$/i.test(url.pathname);
+
+  if (isCodeOrData) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          }
+          return networkResponse;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => {
+            if (cached) return cached;
+            if (request.mode === 'navigate') return caches.match('./index.html');
+            return new Response('Offline', { status: 503, statusText: 'Offline' });
+          })
+        )
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(request).then((cachedResponse) => {

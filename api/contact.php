@@ -105,8 +105,10 @@ if (empty($input['js_check'])) {
     exit;
 }
 
-// 3. Zabezpieczenie Anty-Bot: Pomiar czasu interakcji (minimalny czas wypełniania >= 2.5s)
-if (!isset($input['submission_seconds']) || (float)$input['submission_seconds'] < 2.5) {
+// 3. Zabezpieczenie Anty-Bot: Pomiar czasu interakcji (minimalny czas wypełniania >= 2.5s, odrzucenie bool/NaN/Infinity)
+$rawSubSec = $input['submission_seconds'] ?? null;
+$subSecFloat = (is_numeric($rawSubSec) && !is_bool($rawSubSec)) ? (float)$rawSubSec : 0.0;
+if (!is_finite($subSecFloat) || $subSecFloat < 2.5) {
     echo json_encode(['status' => 'success', 'success' => true, 'message' => 'Dziękujemy! Twoja wiadomość została wysłana pomyślnie.']);
     exit;
 }
@@ -177,41 +179,115 @@ save_lead([
     $newsletterConsent
 ], false);
 
-// 8. Hybrydowa wysyłka: Helpdesk osTicket API (jeśli skonfigurowano klucz w .env) z fallbackiem do mail()
+// 8. Hybrydowa wysyłka: Helpdesk osTicket API (Dual-Endpoint Failover) z powiadomieniem Ntfy 1-Klik i fallbackiem do mail()
+@session_write_close();
 $osTicketApiKey = get_env_secret('OSTICKET_API_KEY');
 $osTicketApiUrl = get_env_secret('OSTICKET_API_URL', 'http://hd.twojastronawww.pl:8080/ticket_hook.php');
 $ticketCreated = false;
+$ticketNum = 'BRAK';
 
 if (!empty($osTicketApiKey) && function_exists('curl_init')) {
+    $digits = preg_replace('/\D+/', '', $phone) ?: date('YmdHis');
     $ticketData = [
         'name' => $name,
-        'email' => $hasEmail ? $email : 'kontakt@fuegolingua.pl',
-        'phone' => $phone,
-        'subject' => $messageRaw === '' ? "Szybki kontakt telefoniczny: $name ($phone)" : "Wiadomość z formularza Fuego Lingua od: $name",
+        'email' => $hasEmail ? $email : "tel-{$digits}@fuegolingua.pl",
+        'phone' => $hasPhone ? $phone : '',
+        'subject' => $messageRaw === '' ? "[Fuego Lingua] Szybki kontakt telefoniczny: $name ($phone)" : "[Fuego Lingua] Wiadomość z formularza od: $name",
         'message' => "Telefon: $phone\nNewsletter: $newsletterConsent\n\n$message",
         'ip' => $maskedIp,
         'source' => 'Web',
+        'autorespond' => false,
+        'send_email' => false,
     ];
 
-    $ch = curl_init($osTicketApiUrl);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'X-API-Key: ' . $osTicketApiKey,
-        'Content-Type: application/json',
-        'Expect:'
+    $endpoints = [
+        ['url' => $osTicketApiUrl, 'resolve' => ['hd.twojastronawww.pl:8080:127.0.0.1']],
+        ['url' => 'https://hd.twojastronawww.pl/ticket_hook.php', 'resolve' => []],
+    ];
+
+    foreach ($endpoints as $ep) {
+        $ch = curl_init($ep['url']);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'X-API-Key: ' . $osTicketApiKey,
+            'Content-Type: application/json',
+            'Expect:'
+        ]);
+        if (!empty($ep['resolve'])) {
+            curl_setopt($ch, CURLOPT_RESOLVE, $ep['resolve']);
+        }
+        curl_setopt($ch, CURLOPT_USERAGENT, 'FuegoLingua-HelpdeskClient/2.0');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($ticketData, JSON_UNESCAPED_UNICODE));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 0);
+        if (defined('CURLPROTO_HTTPS') && defined('CURLPROTO_HTTP')) {
+            curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS | CURLPROTO_HTTP);
+        }
+
+        $apiResponse = @curl_exec($ch);
+        if (is_string($apiResponse) && strlen($apiResponse) > 65536) {
+            $apiResponse = substr($apiResponse, 0, 65536);
+        }
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $resArr = is_string($apiResponse) ? json_decode($apiResponse, true) : null;
+        if ($httpCode === 201 && !empty($resArr['success'])) {
+            $ticketCreated = true;
+            $ticketNum = (string)($resArr['number'] ?? 'OK');
+            break;
+        }
+    }
+}
+
+// 8b. Powiadomienie Push 1-Klik na Ntfy.sh (jeśli skonfigurowano NTFY_TOPIC w .env)
+$ntfyTopic = get_env_secret('NTFY_TOPIC');
+if ($ntfyTopic !== '' && function_exists('curl_init')) {
+    $ntfyLines = ["👤 IMIĘ: {$name}"];
+    $ntfyActions = [];
+    $titleParts = [$name];
+    if ($hasPhone) {
+        $digits = preg_replace('/\D+/', '', $phone) ?: '';
+        $dial = (strlen($digits) === 9) ? '+48' . $digits : '+' . $digits;
+        $ntfyLines[] = "📞 TELEFON: {$phone}";
+        $titleParts[] = "TEL: {$phone}";
+        $ntfyActions[] = "view, Zadzwon ({$phone}), tel:{$dial}";
+    }
+    if ($hasEmail) {
+        $ntfyLines[] = "✉️ E-MAIL: {$email}";
+        $titleParts[] = "EMAIL: {$email}";
+        $ntfyActions[] = "view, Napisz e-mail ({$email}), mailto:{$email}";
+    }
+    $ntfyLines[] = "🎫 TICKET: " . ($ticketCreated ? "#{$ticketNum}" : "brak");
+    $ntfyLines[] = "🌐 ŹRÓDŁO: Formularz fuegolingua.pl";
+    $ntfyLines[] = "────────────────────────";
+    $ntfyLines[] = $message;
+    $ntfyActions[] = "view, Otworz Helpdesk, https://hd.twojastronawww.pl/scp/";
+
+    $chNtfy = curl_init("https://ntfy.sh/{$ntfyTopic}");
+    curl_setopt_array($chNtfy, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => implode("\n", $ntfyLines),
+        CURLOPT_HTTPHEADER => [
+            'Title: Formularz (Fuego Lingua) - ' . implode(' | ', $titleParts),
+            'Priority: high',
+            'Tags: incoming_envelope,telephone_receiver',
+            'Actions: ' . implode('; ', array_slice($ntfyActions, 0, 3))
+        ],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 3,
+        CURLOPT_CONNECTTIMEOUT => 2,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_MAXREDIRS => 0
     ]);
-    curl_setopt($ch, CURLOPT_RESOLVE, ['hd.twojastronawww.pl:8080:127.0.0.1']);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'FuegoLingua-HelpdeskClient/2.0');
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($ticketData, JSON_UNESCAPED_UNICODE));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-
-    $apiResponse = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    $resArr = json_decode((string)$apiResponse, true);
-    $ticketCreated = ($httpCode === 201 && !empty($resArr['success']));
+    if (defined('CURLPROTO_HTTPS')) {
+        curl_setopt($chNtfy, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+    }
+    @curl_exec($chNtfy);
+    curl_close($chNtfy);
 }
 
 $toEmail = get_env_secret('CONTACT_EMAIL', 'kontakt@fuegolingua.pl');

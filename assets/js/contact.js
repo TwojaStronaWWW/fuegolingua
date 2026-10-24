@@ -3,6 +3,20 @@
  * FuegoLingua - Zero-Dependency Vanilla JS
  */
 
+export function isStrictFiniteNumber(val) {
+  if (typeof val === 'boolean' || val === null || val === '') return false;
+  const num = Number(val);
+  return Number.isFinite(num);
+}
+
+export function getMonotonicMs() {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    const t = performance.now();
+    if (isStrictFiniteNumber(t)) return t;
+  }
+  return Date.now();
+}
+
 export function initContactForm(
   doc = document,
   storage = typeof localStorage !== 'undefined' ? localStorage : null
@@ -15,7 +29,7 @@ export function initContactForm(
   if (!contactForm) return null;
 
   const DRAFT_KEY = 'tsw_contact_draft_v1';
-  const formInitTime = Date.now();
+  const formInitTime = getMonotonicMs();
   const inputs = Array.from(contactForm.querySelectorAll?.('input, textarea') || []);
 
   const saveDraft = () => {
@@ -91,7 +105,8 @@ export function initContactForm(
       return;
     }
 
-    const submissionSeconds = Math.max(2.6, (Date.now() - formInitTime) / 1000).toFixed(2);
+    const rawElapsed = (getMonotonicMs() - formInitTime) / 1000;
+    const submissionSeconds = Math.max(2.6, isStrictFiniteNumber(rawElapsed) && rawElapsed >= 0 ? rawElapsed : 0).toFixed(2);
     if (formData && typeof formData.append === 'function') {
       formData.append('js_check', '1');
       formData.append('submission_seconds', submissionSeconds);

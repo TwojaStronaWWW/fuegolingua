@@ -67,12 +67,6 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
           if (ariaExpanded) child.setAttribute('aria-expanded', ariaExpanded[1]);
           const ariaLabel = attrs.match(/\baria-label=["']([^"']+)["']/);
           if (ariaLabel) child.setAttribute('aria-label', ariaLabel[1]);
-          const ariaPressed = attrs.match(/\baria-pressed=["']([^"']+)["']/);
-          if (ariaPressed) child.setAttribute('aria-pressed', ariaPressed[1]);
-          const placeholder = attrs.match(/\bplaceholder=["']([^"']+)["']/);
-          if (placeholder) child.setAttribute('placeholder', placeholder[1]);
-          const titleAttr = attrs.match(/\btitle=["']([^"']+)["']/);
-          if (titleAttr) child.setAttribute('title', titleAttr[1]);
           child.parentNode = this;
           this.children.push(child);
           elements.set(child.id, child);
@@ -122,9 +116,6 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
       const fns = this._listeners.get(evt.type) || [];
       fns.forEach(fn => fn.call(this, evt));
       return true;
-    }
-    click() {
-      this.dispatchEvent({ type: 'click', target: this });
     }
     focus() { this._focused = true; }
     reset() { this.value = ''; }
@@ -199,6 +190,10 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
     }
   };
 
+  const forbiddenFetch = async (url) => {
+    throw new Error(`NETWORK_FORBIDDEN: Niezamockowane wywołanie fetch w teście jednostkowym (${String(url)})`);
+  };
+
   const mockWindow = {
     document: mockDocument,
     innerWidth: 1024,
@@ -206,6 +201,10 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
     pageYOffset: 0,
     scrollY: 0,
     scrollTo: () => {},
+    performance: {
+      now: () => Date.now()
+    },
+    fetch: forbiddenFetch,
     sessionStorage: {
       _data: new Map(),
       getItem(k) { return this._data.get(k) || null; },
@@ -228,6 +227,7 @@ export function setupMockDom(initialHtml = '<!DOCTYPE html><html><body></body></
   globalThis.document = mockDocument;
   globalThis.sessionStorage = mockWindow.sessionStorage;
   globalThis.localStorage = mockWindow.localStorage;
+  globalThis.fetch = forbiddenFetch;
 
-  return { mockWindow, mockDocument, MockElement, elements, listeners };
+  return { mockWindow, mockDocument, MockElement, elements, listeners, forbiddenFetch };
 }

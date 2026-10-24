@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: 1.1 Pobranie kodu repozytorium
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: 1.2 Sprawdzenie pliku wejściowego (index.html)
         run: |
@@ -56,6 +58,11 @@ jobs:
       - name: 1.7 Uruchomienie testów jednostkowych i raportu pokrycia (Coverage)
         run: npm run test:coverage
 
+      - name: 1.8 Przeglądarkowy UI Smoke Test (Playwright Chromium)
+        run: |
+          npx --yes playwright@1.51.1 install --with-deps chromium
+          node tests/smoke/ui-smoke.js
+
   audit:
     name: 2. Audyt jakościowy Lighthouse CI
     needs: [test]
@@ -64,6 +71,8 @@ jobs:
     steps:
       - name: 2.1 Pobranie kodu repozytorium
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: 2.2 Konfiguracja środowiska Node.js
         uses: actions/setup-node@v4
@@ -86,10 +95,44 @@ jobs:
     steps:
       - name: 3.1 Pobranie kodu repozytorium
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: 3.1b Pre-Deploy Snapshot (Off-Site Backup danych z serwera LH.pl)
+        continue-on-error: true
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_PORT: ${{ secrets.FTP_PORT || 40022 }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          sudo apt-get update -y && sudo apt-get install -y lftp
+          mkdir -p /tmp/pre-deploy-snapshot
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -p "${FTP_PORT:-40022}" "sftp://$FTP_SERVER" << 'EOF'
+          set sftp:auto-confirm yes
+          set net:timeout 25
+          set net:max-retries 2
+          mirror --only-newer --ignore-time \
+            --exclude-glob "api/sessions/*" \
+            --exclude-glob "api/rate_limits/*" \
+            "/home/platne/serwer417204/public_html/fuegolingua.pl/api" "/tmp/pre-deploy-snapshot/api" || true
+          bye
+          EOF
+          tar -czf "/tmp/pre-deploy-snapshot-${GITHUB_SHA::7}.tar.gz" -C /tmp/pre-deploy-snapshot . || true
+
+      - name: 3.1c Archiwizacja migawki Pre-Deploy (7 dni retencji)
+        uses: actions/upload-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: pre-deploy-snapshot-${{ github.sha }}
+          path: /tmp/pre-deploy-snapshot-*.tar.gz
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: 3.2 Oczyszczenie zbędnych plików deweloperskich przed wysłaniem na serwer
         run: |
-          rm -rf .git .github .githooks tests scripts docs .lighthouserc.json .gitleaks.toml .env.example .gitattributes .gitignore .editorconfig eslint.config.mjs .htmlhintrc docker-compose.yml package*.json
+          rm -rf .git .github .gemini .githooks tests scripts docs .lighthouserc.json .gitleaks.toml .env.example .gitattributes .gitignore .editorconfig eslint.config.mjs .htmlhintrc docker-compose.yml package*.json
 
       - name: 3.3 Wdrożenie plików przez SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
