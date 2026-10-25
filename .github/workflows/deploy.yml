@@ -132,7 +132,7 @@ jobs:
 
       - name: 3.2 Oczyszczenie zbędnych plików deweloperskich przed wysłaniem na serwer
         run: |
-          rm -rf .git .github .gemini .githooks tests scripts docs .lighthouserc.json .gitleaks.toml .env.example .gitattributes .gitignore .editorconfig eslint.config.mjs .htmlhintrc docker-compose.yml package*.json
+          rm -rf .git .github .gemini .githooks tests scripts docs .lighthouserc.json .gitleaks.toml .env.example .gitattributes .gitignore .editorconfig eslint.config.mjs .htmlhintrc docker-compose.yml package*.json *.bak
 
       - name: 3.3 Wdrożenie plików przez SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
@@ -141,7 +141,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server: ${{ secrets.FTP_SERVER }}
           port: ${{ secrets.FTP_PORT || 40022 }}
-          local_path: './* ./.htaccess'
+          local_path: './* ./.htaccess ./.well-known'
           remote_path: '/home/platne/serwer417204/public_html/fuegolingua.pl'
           sftp_args: '-o ConnectTimeout=60'
 

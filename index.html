@@ -59,6 +59,7 @@
     <!-- Core CSS -->
     <link rel="stylesheet" href="assets/css/style.css?v=4.1">
     <link rel="stylesheet" href="assets/css/media.css?v=4.1">
+  <link rel="alternate" type="text/markdown" href="llms.txt" title="Baza wiedzy dla asystentów AI (llms.txt)">
 </head>
 
 <body>
@@ -460,6 +461,24 @@
     <script data-cfasync="false" type="module" src="assets/js/main.js"></script>
     <script data-cfasync="false" type="module" src="assets/js/contact.js"></script>
     <script data-cfasync="false" type="module" src="assets/js/ai-widget.js?v=4.5" data-site-id="fuegolingua" data-title="Asystent Fuego Lingua"></script>
+  <!-- [REF-02] Speculation Rules API (Web Platform Baseline): natychmiastowa nawigacja 0 ms bez SPA przy najechaniu kursorem -->
+  <script type="speculationrules">
+  {
+    "prerender": [
+      {
+        "where": {
+          "and": [
+            { "href_matches": "/*" },
+            { "not": { "href_matches": "/api/*" } },
+            { "not": { "href_matches": "/assets/php/*" } },
+            { "not": { "href_matches": "/admin/*" } }
+          ]
+        },
+        "eagerness": "moderate"
+      }
+    ]
+  }
+  </script>
 </body>
 
 </html>
