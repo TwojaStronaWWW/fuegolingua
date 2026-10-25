@@ -1,0 +1,7 @@
+# Polityka Zgłaszania Podatności (RFC 9116 / ISO/IEC 27001) — FuegoLingua.pl
+# [REF-06] Standard: https://securitytxt.org/ (RFC 9116)
+
+Contact: mailto:kontakt@fuegolingua.pl
+Expires: 2027-12-31T23:59:00.000Z
+Preferred-Languages: pl, es, en
+Canonical: https://fuegolingua.pl/.well-known/security.txt

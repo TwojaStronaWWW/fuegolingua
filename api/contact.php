@@ -68,6 +68,18 @@ function mask_ip($ip): string {
     return '0.0.0.0';
 }
 
+// Wczesne zwolnienie sesji PHP (jeśli aktywna), aby nie blokować równoległych żądań podczas cURL i zapisu plikowego
+if (session_status() === PHP_SESSION_ACTIVE) {
+    @session_write_close();
+}
+
+// 0a. [REF-05] Zabezpieczenie OWASP Fetch Metadata (Sec-Fetch-Site) przed żądaniami Cross-Site
+if (isset($_SERVER['HTTP_SEC_FETCH_SITE']) && strtolower(trim((string)$_SERVER['HTTP_SEC_FETCH_SITE'])) === 'cross-site') {
+    http_response_code(403);
+    echo json_encode(['status' => 'error', 'success' => false, 'message' => 'Niedozwolone żądanie międzywitrynowe (Cross-Site Request Blocked).']);
+    exit;
+}
+
 // Rzeczywiste IP klienta (uwzględnienie Cloudflare Proxy Anycast) i anonimizacja RODO
 $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 $maskedIp = mask_ip($clientIp);
