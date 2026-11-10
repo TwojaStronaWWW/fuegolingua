@@ -135,7 +135,7 @@ jobs:
           rm -rf .git .github .gemini .githooks node_modules smoke-diagnostics coverage dist tests scripts docs .lighthouserc.json .gitleaks.toml .npmrc .env.example .gitattributes .gitignore .editorconfig eslint.config.mjs .htmlhintrc docker-compose.yml package*.json *.bak api/leads_*.csv api/rate_limits/*.json api/sessions/sess_*
 
       - name: 3.3 Wdrożenie plików przez SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.6
         with:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
