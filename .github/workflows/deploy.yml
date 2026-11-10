@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: 1.1 Pobranie kodu repozytorium
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -70,7 +70,7 @@ jobs:
 
     steps:
       - name: 2.1 Pobranie kodu repozytorium
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -94,7 +94,7 @@ jobs:
 
     steps:
       - name: 3.1 Pobranie kodu repozytorium
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
