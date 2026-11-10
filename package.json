@@ -25,6 +25,6 @@
     "ai:status": "node scripts/ai-control.js status"
   },
   "devDependencies": {
-    "@lhci/cli": "^0.14.0"
+    "@lhci/cli": "^0.16.0"
   }
 }
