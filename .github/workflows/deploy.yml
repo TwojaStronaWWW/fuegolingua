@@ -121,7 +121,7 @@ jobs:
           tar -czf "/tmp/pre-deploy-snapshot-${GITHUB_SHA::7}.tar.gz" -C /tmp/pre-deploy-snapshot . || true
 
       - name: 3.1c Archiwizacja migawki Pre-Deploy (7 dni retencji)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         continue-on-error: true
         with:

@@ -105,7 +105,7 @@ jobs:
 
       - name: 2.4 Zapis diagnostyki w razie awarii (smoke-diagnostics)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-diagnostics
           path: smoke-diagnostics/
