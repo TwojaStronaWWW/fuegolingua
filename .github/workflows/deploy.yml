@@ -31,7 +31,7 @@ jobs:
 
       - name: 1.3 Ochrona przed wyciekiem danych i sekretów
         run: |
-          if git ls-files | grep -E "(\.env|config/secrets\.php|\.htpasswd|leads_.*\.csv)$"; then
+          if git ls-files | grep -E "(\.env|config/secrets\.php|\.htpasswd|leads_.*\.csv|\.(sqlite|sqlite3|db|pem|key|kdbx))$"; then
             echo "❌ Wykryto plik z wrażliwymi danymi w repozytorium!"
             exit 1
           fi
@@ -132,7 +132,7 @@ jobs:
 
       - name: 3.2 Oczyszczenie zbędnych plików deweloperskich przed wysłaniem na serwer
         run: |
-          rm -rf .git .github .gemini .githooks tests scripts docs .lighthouserc.json .gitleaks.toml .env.example .gitattributes .gitignore .editorconfig eslint.config.mjs .htmlhintrc docker-compose.yml package*.json *.bak
+          rm -rf .git .github .gemini .githooks node_modules smoke-diagnostics coverage dist tests scripts docs .lighthouserc.json .gitleaks.toml .npmrc .env.example .gitattributes .gitignore .editorconfig eslint.config.mjs .htmlhintrc docker-compose.yml package*.json *.bak api/leads_*.csv api/rate_limits/*.json api/sessions/sess_*
 
       - name: 3.3 Wdrożenie plików przez SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4

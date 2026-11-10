@@ -3,12 +3,13 @@
  * Strategia: Network-First dla kodu (.html, .css, .js, .json) + Stale-While-Revalidate dla mediów.
  */
 
-const CACHE_NAME = 'fuegolingua-v4';
+const CACHE_NAME = 'fuegolingua-v5';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './cennik.html',
   './site.webmanifest',
+  './assets/data/ai-config.json',
   './assets/css/style.css',
   './assets/css/media.css',
   './assets/css/cennik.css',

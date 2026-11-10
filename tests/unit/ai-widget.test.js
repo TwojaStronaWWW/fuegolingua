@@ -1,13 +1,23 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { setupMockDom } from '../helpers/mock-dom.js';
 import {
+  MAX_CACHE_ENTRIES,
+  escapeHtml,
+  isOwnerAnalyticsIgnored,
   formatMarkdown,
   getLocalFallbackAnswer,
   computeKnowledgeVersion,
   searchKnowledgeEntries,
   initAiWidget
 } from '../../assets/js/ai-widget.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT_DIR = path.join(__dirname, '..', '..');
 
 describe('Uniwersalny Widget Asystenta AI v3.0 (assets/js/ai-widget.js)', () => {
   let dom;
@@ -227,6 +237,68 @@ describe('Uniwersalny Widget Asystenta AI v3.0 (assets/js/ai-widget.js)', () => 
     const widget = initAiWidget(dom.mockDocument, dom.mockWindow);
     assert.equal(widget.getCachedAnswer('Ile kosztuje strona WWW?'), null);
     assert.equal(widget.getCachedAnswer('Jak wygląda współpraca?'), null);
+  });
+
+  test('Ochrona DOM XSS w atrybutach data-title i data-placeholder, bezpieczny linkifier @ w URL oraz limit MAX_CACHE_ENTRIES = 50', async () => {
+    assert.equal(MAX_CACHE_ENTRIES, 50);
+    assert.equal(escapeHtml('"><img src=x onerror=alert(1)>'), '&quot;&gt;&lt;img src=x onerror=alert(1)&gt;');
+
+    const urlWithAt = formatMarkdown('Profil: https://instagram.com/@fuegolingua.official oraz mail kontakt@fuegolingua.pl');
+    assert.ok(urlWithAt.includes('href="https://instagram.com/@fuegolingua.official"'));
+    assert.equal(urlWithAt.includes('href="mailto:instagram.com/@fuegolingua.official"'), false);
+    assert.ok(urlWithAt.includes('href="mailto:kontakt@fuegolingua.pl"'));
+
+    const widget = initAiWidget(dom.mockDocument, dom.mockWindow, {
+      siteId: 'fuegolingua',
+      title: '"><img src=x onerror=alert(1)>',
+      placeholder: '"><svg onload=alert(2)>'
+    });
+    assert.ok(widget);
+    const rootHtml = dom.mockDocument.getElementById('tsw-ai-widget-root').innerHTML;
+    assert.equal(rootHtml.includes('<img src=x'), false, 'Nieescapowany tag <img> w tytule widgetu (DOM XSS)');
+    assert.equal(rootHtml.includes('<svg onload='), false, 'Nieescapowany atrybut placeholder (DOM XSS)');
+    assert.ok(rootHtml.includes('id="tswAiForm"'), 'Formularz widgetu musi posiadać id="tswAiForm"');
+  });
+
+  test('isOwnerAnalyticsIgnored wyklucza ruch lokalny, WebDriver oraz flagę właściciela ?ignore_analytics=1', () => {
+    assert.equal(isOwnerAnalyticsIgnored({ location: { hostname: 'localhost', search: '' }, navigator: {} }), true);
+    assert.equal(isOwnerAnalyticsIgnored({ location: { hostname: 'fuegolingua.pl', search: '' }, navigator: { webdriver: true } }), true);
+
+    const store = new Map();
+    const prodWin = {
+      location: { hostname: 'fuegolingua.pl', search: '?ignore_analytics=1' },
+      navigator: { webdriver: false },
+      localStorage: {
+        getItem: (k) => store.get(k) || null,
+        setItem: (k, v) => store.set(k, v),
+        removeItem: (k) => store.delete(k)
+      }
+    };
+    assert.equal(isOwnerAnalyticsIgnored(prodWin), true);
+    assert.equal(store.get('tsw_ignore_analytics'), '1');
+  });
+
+  test('Multi-Tenant AI Isolation: assets/data/ai-config.json istnieje i współpracuje z initAiWidget oraz scripts/ai-control.js', async () => {
+    const configPath = path.join(ROOT_DIR, 'assets', 'data', 'ai-config.json');
+    assert.ok(fs.existsSync(configPath), 'Brak pliku assets/data/ai-config.json');
+    const tenantConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    assert.equal(tenantConfig.siteId, 'fuegolingua');
+    assert.equal(typeof tenantConfig.enabled, 'boolean');
+    assert.ok(Array.isArray(tenantConfig.quickPrompts) && tenantConfig.quickPrompts.length >= 3);
+
+    const disabledWidget = initAiWidget(dom.mockDocument, dom.mockWindow, {
+      tenantConfig: { ...tenantConfig, enabled: false }
+    });
+    assert.equal(disabledWidget, null, 'Gdy tenantConfig.enabled === false, widget nie powinien się renderować');
+
+    const enabledWidget = initAiWidget(dom.mockDocument, dom.mockWindow, {
+      tenantConfig: { ...tenantConfig, enabled: true }
+    });
+    assert.ok(enabledWidget);
+
+    const aiControl = await import('../../scripts/ai-control.js');
+    assert.equal(typeof aiControl.readAiConfig, 'function');
+    assert.equal(typeof aiControl.setAiEnabled, 'function');
   });
 });
 

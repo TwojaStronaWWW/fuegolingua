@@ -15,6 +15,18 @@ description = "Hardcoded Admin Password"
 regex = '''(?i)(admin_secret|admin_pass)\s*[:=]\s*['"][^'"$]{8,}['"]'''
 tags = ["password", "admin"]
 
+[[rules]]
+id = "ntfy-bearer-token"
+description = "Ntfy Bearer Access Token"
+regex = '''tk_[a-zA-Z0-9]{24,}'''
+tags = ["token", "ntfy"]
+
+[[rules]]
+id = "cloudflare-r2-secret"
+description = "Cloudflare R2 Secret Access Key"
+regex = '''(?i)r2_secret_access_key\s*[:=]\s*['"][a-f0-9]{40,64}['"]'''
+tags = ["key", "cloudflare", "r2"]
+
 [allowlist]
 description = "Allowlist for template examples, local gitignored env files, and tests"
 paths = [

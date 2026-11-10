@@ -31,7 +31,9 @@ export const MIME_TYPES = {
   '.pdf': 'application/pdf',
   '.xml': 'application/xml; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
+  '.md': 'text/markdown; charset=utf-8',
   '.webp': 'image/webp',
+  '.avif': 'image/avif',
 };
 
 export const SECURITY_HEADERS = {
@@ -40,12 +42,13 @@ export const SECURITY_HEADERS = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
 };
 
-const BLOCKED_FILE_PATTERN = /(^|[\/\\])(\.env.*|\.htaccess|\.git.*|.*\.(php|bak|tmp|log|sql|sh|swp))$/i;
+const BLOCKED_FILE_PATTERN =
+  /(^|[\/\\])(\.env.*|\.htaccess|\.git.*|\.npmrc|\.gitleaks\.toml|package(-lock)?\.json|api[\/\\](sessions|rate_limits)([\/\\]|$)|.*\.(php|bak|tmp|log|sql|sqlite|sqlite3|db|pem|key|kdbx|csv|lock|sh|swp))$/i;
 
 export function resolveSafeFilePath(rawUrl = '/', rootDir = ROOT_DIR) {
   let reqUrl;
   try {
-    reqUrl = decodeURI(String(rawUrl).split('?')[0]);
+    reqUrl = decodeURIComponent(String(rawUrl).split('?')[0]);
   } catch {
     return { filePath: '', isAllowed: false, isMalformed: true };
   }

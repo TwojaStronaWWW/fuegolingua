@@ -5,15 +5,25 @@ package-lock.json
 # Environment & Secrets (ISO 27001)
 .env
 .env.*
+.env.bak*
 !.env.example
 config/secrets.php
 .htpasswd
+*.pem
+*.key
+*.kdbx
+id_ed25519*
+*.sqlite
+*.sqlite3
+*.db
 
-# Testing & Coverage
+# Testing, Audits & Coverage
 coverage/
 .nyc_output/
 dist/
 .wrangler/
+docs/audits/
+smoke-diagnostics/
 
 # API Sessions, Limits & CRM Leads (Zero Data Leakage)
 api/sessions/*

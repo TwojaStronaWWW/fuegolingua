@@ -1,8 +1,13 @@
 Options -Indexes
 
-# Kanoniczny adres bez www (301 Moved Permanently – eliminacja duplikacji w Google Search Console)
+# Kanoniczny adres bez www (301 Moved Permanently – eliminacja duplikacji w Google Search Console) + Ochrona PHP2Shell / L7 Query Guard
 <IfModule mod_rewrite.c>
   RewriteEngine On
+
+  # Blokada prób RCE / PHP-CGI Argument Injection (CVE-2012-1823 / CVE-2024-4577) oraz wrapperów phar/php
+  RewriteCond %{QUERY_STRING} (?:^|&)(?:%2d|-)(?:d|s|n|p|r)|allow_url_include|auto_prepend_file|php://input|phar:// [NC]
+  RewriteRule ^ - [F,L]
+
   RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
   RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 </IfModule>
@@ -15,6 +20,7 @@ AddType 'application/json; charset=UTF-8' json
 AddType 'application/manifest+json; charset=UTF-8' webmanifest
 AddType 'text/markdown; charset=UTF-8' md
 AddType 'image/webp' webp
+AddType 'image/avif' avif
 
 # Nagłówki bezpieczeństwa OWASP / ISO 27001 oraz Cache-Control (microphone=(self) dla dyktowania głosowego w Asystencie AI)
 <IfModule mod_headers.c>
@@ -29,9 +35,12 @@ AddType 'image/webp' webp
   Header unset X-Powered-By
   Header unset ETag
 
-  <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|webp|svg|woff2|js|css|swf)$">
+  <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|webp|avif|svg|woff2|js|css|swf)$">
     Header always set Cache-Control "max-age=31536000, public"
     Header unset Last-Modified
+  </FilesMatch>
+  <FilesMatch "^sw\.js$">
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
   </FilesMatch>
   <FilesMatch "\.(html|htm|php)$">
     Header always set Cache-Control "max-age=600, private, must-revalidate"
@@ -40,7 +49,7 @@ AddType 'image/webp' webp
 
 FileETag None
 
-# Wydajność: Expires & Kompresja GZIP/DEFLATE (Core Web Vitals)
+# [REF-01] Wydajność: Expires & Kompresja BROTLI + GZIP/DEFLATE (Core Web Vitals)
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresByType image/jpg "access plus 1 year"
@@ -48,6 +57,7 @@ FileETag None
   ExpiresByType image/gif "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
   ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/avif "access plus 1 year"
   ExpiresByType image/svg+xml "access plus 1 year"
   ExpiresByType image/x-icon "access plus 1 year"
   ExpiresByType text/css "access plus 1 month"
@@ -56,8 +66,12 @@ FileETag None
   ExpiresByType application/font-woff2 "access plus 1 year"
 </IfModule>
 
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css text/markdown application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json image/svg+xml
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/markdown application/javascript application/json application/manifest+json image/svg+xml
 </IfModule>
 
 # Wyłączenie wyświetlania błędów PHP na środowisku produkcyjnym (ISO 27001)
@@ -66,8 +80,8 @@ FileETag None
   php_flag log_errors On
 </IfModule>
 
-# Blokada bezpośredniego dostępu HTTP do kopii zapasowych, logów i plików środowiskowych
-<FilesMatch "(^#.*#|\.(bak|conf|dist|fla|in[ci]|log|orig|psd|sh|sql|sw[op]|tmp)|~|\.env.*)$">
+# Blokada bezpośredniego dostępu HTTP do kopii zapasowych, baz danych, kluczy, metadanych Node i plików środowiskowych
+<FilesMatch "(^#.*#|\.(bak|conf|dist|fla|in[ci]|log|orig|psd|sh|sql|sqlite|sqlite3|db|pem|key|kdbx|sw[op]|tmp)|~|\.env.*|package(-lock)?\.json|\.npmrc|\.gitleaks\.toml)$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

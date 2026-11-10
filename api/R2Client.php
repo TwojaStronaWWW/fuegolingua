@@ -223,7 +223,7 @@ class R2Client
         $body = curl_exec($ch);
         $statusCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
-        curl_close($ch);
+        unset($ch);
 
         $this->lastStatusCode = $statusCode;
 

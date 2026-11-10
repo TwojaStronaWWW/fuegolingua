@@ -30,7 +30,7 @@ export function initContactForm(
 
   const DRAFT_KEY = 'tsw_contact_draft_v1';
   const formInitTime = getMonotonicMs();
-  const inputs = Array.from(contactForm.querySelectorAll?.('input, textarea') || []);
+  const inputs = Array.from(contactForm.querySelectorAll?.('input, textarea, select') || []);
 
   const saveDraft = () => {
     if (!storage) return;
@@ -79,8 +79,18 @@ export function initContactForm(
     el.addEventListener?.('change', saveDraft);
   });
 
+  let isSubmitting = false;
+  const escapeStatusHtml = (str) => String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
   const submitHandler = async (e) => {
     if (typeof e?.preventDefault === 'function') e.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
 
     if (errorDiv && errorDiv.style) errorDiv.style.display = 'none';
     if (successMsg && successMsg.style) successMsg.style.display = 'none';
@@ -102,11 +112,12 @@ export function initContactForm(
         successMsg.textContent = '¡Gracias! Twoja wiadomość dotarła do nas.';
       }
       contactForm.reset?.();
+      isSubmitting = false;
       return;
     }
 
     const rawElapsed = (getMonotonicMs() - formInitTime) / 1000;
-    const submissionSeconds = Math.max(2.6, isStrictFiniteNumber(rawElapsed) && rawElapsed >= 0 ? rawElapsed : 0).toFixed(2);
+    const submissionSeconds = Math.max(0, isStrictFiniteNumber(rawElapsed) && rawElapsed >= 0 ? rawElapsed : 0).toFixed(2);
     if (formData && typeof formData.append === 'function') {
       formData.append('js_check', '1');
       formData.append('submission_seconds', submissionSeconds);
@@ -151,7 +162,7 @@ export function initContactForm(
       if (isOk) {
         const msg = data.message || '¡Gracias! Twoja wiadomość została wysłana pomyślnie.';
         if (formStatus) {
-          formStatus.innerHTML = '<p class="success">' + msg + '</p>';
+          formStatus.innerHTML = '<p class="success">' + escapeStatusHtml(msg) + '</p>';
         }
         if (successMsg) {
           if (successMsg.style) successMsg.style.display = 'block';
@@ -162,7 +173,7 @@ export function initContactForm(
       } else {
         const errMsg = data.message || 'Wystąpił błąd podczas wysyłania.';
         if (formStatus) {
-          formStatus.innerHTML = '<p class="error">' + errMsg + '</p>';
+          formStatus.innerHTML = '<p class="error">' + escapeStatusHtml(errMsg) + '</p>';
         }
         if (errorDiv) {
           if (errorDiv.style) errorDiv.style.display = 'block';
@@ -175,13 +186,14 @@ export function initContactForm(
         errorMsg += ' (Szczegóły: ' + error.message + ')';
       }
       if (formStatus) {
-        formStatus.innerHTML = '<p class="error">' + errorMsg + '<br>Upewnij się, że strona otwarta jest na serwerze z obsługą PHP.</p>';
+        formStatus.innerHTML = '<p class="error">' + escapeStatusHtml(errorMsg) + '<br>Upewnij się, że strona otwarta jest na serwerze z obsługą PHP.</p>';
       }
       if (errorDiv) {
         if (errorDiv.style) errorDiv.style.display = 'block';
         errorDiv.textContent = 'Błąd połączenia. Spróbuj ponownie.';
       }
     } finally {
+      isSubmitting = false;
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.innerText = originalBtnText;

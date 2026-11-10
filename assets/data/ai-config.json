@@ -1,0 +1,41 @@
+{
+  "enabled": true,
+  "siteId": "fuegolingua",
+  "title": "Asystent Fuego Lingua",
+  "placeholder": "Napisz pytanie o kurs hiszpańskiego lub cennik... (PL / ES)",
+  "welcomeMessage": "¡Hola! 💃 Jestem wirtualnym doradcą **Fuego Lingua**. W czym mogę Ci pomóc? Zapytaj o bezpłatną konsultację online, cennik zajęć 1:1 / w grupach 3–6 os. lub kursy specjalistyczne!",
+  "quickPrompts": [
+    "Bezpłatna konsultacja próbna online",
+    "Ile kosztuje kurs hiszpańskiego?",
+    "Zajęcia 1:1 czy kameralna grupa (3–6 os.)?",
+    "¿Cómo son las clases online? / Hiszpański w biznesie"
+  ],
+  "theme": {
+    "primary": "#c92a2a",
+    "accent": "#e8590c",
+    "highlight": "#ffd43b",
+    "bg": "#0f172a",
+    "surface": "#1e293b",
+    "text": "#f8fafc",
+    "muted": "#cbd5e1",
+    "onPrimary": "#ffffff"
+  },
+  "fallbackFaq": [
+    {
+      "keywords": ["hola", "como son", "clases", "espanol", "español"],
+      "answer": "¡Hola! 🇪🇸 Prowadzimy kursy języka hiszpańskiego w **100% online na żywo** (poziomy **A1–C2**, **80% zajęć to żywa rozmowa**). Oferujemy lekcje indywidualne **1:1**, w parach (**2 os.**) oraz w kameralnych grupach (**3–6 osób**). Pierwsza konsultacja wstępna jest **bezpłatna** — zapisz się w sekcji #contact!"
+    },
+    {
+      "keywords": ["próbn", "probn", "darmow", "bezpłatn", "bezplatn", "konsultacj", "gratis"],
+      "answer": "Pierwsza **konsultacja wstępna online jest całkowicie bezpłatna**! To krótkie spotkanie, podczas którego poznajemy się, określamy Twój poziom i ustalamy plan nauki.\n- Zapisz się przez formularz w sekcji #contact\n- Napisz na: kontakt@fuegolingua.pl\n- Zadzwoń: **796-868-967**"
+    },
+    {
+      "keywords": ["biznes", "firm", "stolar", "budow", "turyst", "branż", "specjalist", "negocios"],
+      "answer": "Prowadzimy dedykowane **kursy specjalistyczne online** (cena maleje o **5 zł** za każdą dodatkową osobę, maks. 6 osób):\n- **Hiszpański w Biznesie**: **130–190 zł** (60 min) / **160–220 zł** (90 min)\n- **Hiszpański w Stolarce i Budownictwie**: **150–210 zł** (60 min) / **170–230 zł** (90 min)\n- **Hiszpański w Turystyce**: **100–140 zł** (60 min) / **120–160 zł** (90 min)\nPełny wykaz znajdziesz w zakładce cennik.html"
+    },
+    {
+      "keywords": ["cen", "koszt", "ile ", "pakiet", "płaci", "precio"],
+      "answer": "Oto cennik zajęć **100% online** dla **Ogólnych Poziomów (A1–B2)**:\n- **Lekcje indywidualne (1:1)**: 60 min – **95 zł** | 90 min – **135 zł**\n- **Lekcje w parze (2 osoby)**: 60 min – **85 zł/os.** | 90 min – **115 zł/os.**\n- **Kameralne grupy (3–6 osób)**: 60 min – **75 zł/os.** | 90 min – **95 zł/os.**\n- **Poziom Extreme (C1–C2)**: 1:1 **140 zł** (60 min) / **200 zł** (90 min), w parze **120 zł/os.**, w grupie **100 zł/os.**\nPierwsza konsultacja jest **bezpłatna**!"
+    }
+  ]
+}

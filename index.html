@@ -5,49 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fuego Lingua - Hiszpański z Pasją | Nauka Hiszpańskiego Online</title>
-    <meta name="description"
-        content="Ucz się hiszpańskiego tak, jak się go czuje: z energią, rytmem i prawdziwymi emocjami. Fuego Lingua - Twój nauczyciel języka hiszpańskiego. Indywidualne lekcje, konwersacje.">
-    <meta name="keywords"
-        content="hiszpański, nauka hiszpańskiego, hiszpański online, korepetycje, konwersacje, hiszpański z pasją, fuego lingua">
-    <meta name="author" content="Fuego Lingua">
+
+    <!-- [REF-02] Capo.js Optimal <head> Order: Preconnects before Stylesheets & Preloads -->
     <link rel="preconnect" href="https://media.fuegolingua.pl" crossorigin>
     <link rel="preconnect" href="https://ai.twojastronawww.pl" crossorigin>
-    <link rel="preload" href="https://media.fuegolingua.pl/kobieta2.webp" as="image" fetchpriority="high">
-
-
-    <!-- SEO & Metadata -->
-    <meta name="robots" content="index, follow">
-    <meta name="theme-color" content="#d9381e">
-    <link rel="canonical" href="https://fuegolingua.pl/">
-    <link rel="manifest" href="site.webmanifest">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://fuegolingua.pl/">
-    <meta property="og:title" content="Fuego Lingua - Hiszpański z Pasją">
-    <meta property="og:description" content="Ucz się hiszpańskiego z energią i rytmem! Zajęcia indywidualne i grupowe.">
-    <meta property="og:image" content="https://media.fuegolingua.pl/fuegolingua-logo_raster.webp">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-
-    <!-- Schema.org JSON-LD -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "EducationalOrganization",
-      "name": "Fuego Lingua",
-      "url": "https://fuegolingua.pl/",
-      "description": "Nauka hiszpańskiego online z pasją. Indywidualne lekcje, konwersacje i kursy hiszpańskiego dopasowane do Ciebie.",
-      "telephone": "+48796868967",
-      "email": "kontakt@fuegolingua.pl"
-    }
-    </script>
-
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Fonts & Core CSS -->
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Raleway:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
@@ -55,11 +20,62 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0&icon_names=architecture,calendar_month,celebration,chat,check_circle,chevron_left,chevron_right,close,devices,domain_verification,flight_takeoff,forum,foundation,group,group_add,groups,luggage,military_tech,mood,person,psychology,public,schedule,school,trending_up,zoom_in&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css?v=4.2">
+    <link rel="stylesheet" href="assets/css/media.css?v=4.2">
 
-    <!-- Core CSS -->
-    <link rel="stylesheet" href="assets/css/style.css?v=4.1">
-    <link rel="stylesheet" href="assets/css/media.css?v=4.1">
-  <link rel="alternate" type="text/markdown" href="llms.txt" title="Baza wiedzy dla asystentów AI (llms.txt)">
+    <!-- LCP Hero Preload -->
+    <link rel="preload" href="https://media.fuegolingua.pl/kobieta2.webp" as="image" fetchpriority="high">
+
+    <!-- SEO, GEO & Metadata -->
+    <meta name="description"
+        content="Ucz się hiszpańskiego w 100% online tak, jak się go czuje: z energią, rytmem i prawdziwymi emocjami. Fuego Lingua - lekcje indywidualne, w parach i kameralnych grupach 3-6 osób.">
+    <meta name="keywords"
+        content="hiszpański, nauka hiszpańskiego, hiszpański online, korepetycje, konwersacje, hiszpański z pasją, fuego lingua">
+    <meta name="author" content="Fuego Lingua">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#d9381e">
+    <link rel="canonical" href="https://fuegolingua.pl/">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+    <link rel="alternate" type="text/markdown" href="llms.txt" title="Baza wiedzy dla asystentów AI (llms.txt)">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fuegolingua.pl/">
+    <meta property="og:title" content="Fuego Lingua - Hiszpański z Pasją">
+    <meta property="og:description" content="Ucz się hiszpańskiego online z energią i rytmem! Zajęcia 1:1, w parach oraz w kameralnych grupach 3–6 osób.">
+    <meta property="og:image" content="https://media.fuegolingua.pl/fuegolingua-logo_raster.webp">
+
+    <!-- [REF-08] Schema.org JSON-LD (@graph) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://fuegolingua.pl/#website",
+          "url": "https://fuegolingua.pl/",
+          "name": "Fuego Lingua",
+          "inLanguage": "pl-PL",
+          "publisher": { "@id": "https://fuegolingua.pl/#organization" }
+        },
+        {
+          "@type": "EducationalOrganization",
+          "@id": "https://fuegolingua.pl/#organization",
+          "name": "Fuego Lingua",
+          "url": "https://fuegolingua.pl/",
+          "logo": "https://media.fuegolingua.pl/fuegolingua-logo_raster.webp",
+          "description": "Szkoła języka hiszpańskiego w 100% online. Indywidualne lekcje 1:1, zajęcia w parach, kameralne grupy 3-6 osób oraz kursy specjalistyczne.",
+          "telephone": "+48796868967",
+          "email": "kontakt@fuegolingua.pl",
+          "sameAs": [
+            "https://instagram.com/fuegolingua_sin_limites"
+          ]
+        }
+      ]
+    }
+    </script>
 </head>
 
 <body>
@@ -460,25 +476,26 @@
     <!-- Scripts (Vanilla ES6 Modules) -->
     <script data-cfasync="false" type="module" src="assets/js/main.js"></script>
     <script data-cfasync="false" type="module" src="assets/js/contact.js"></script>
-    <script data-cfasync="false" type="module" src="assets/js/ai-widget.js?v=4.5" data-site-id="fuegolingua" data-title="Asystent Fuego Lingua"></script>
-  <!-- [REF-02] Speculation Rules API (Web Platform Baseline): natychmiastowa nawigacja 0 ms bez SPA przy najechaniu kursorem -->
-  <script type="speculationrules">
-  {
-    "prerender": [
-      {
-        "where": {
-          "and": [
-            { "href_matches": "/*" },
-            { "not": { "href_matches": "/api/*" } },
-            { "not": { "href_matches": "/assets/php/*" } },
-            { "not": { "href_matches": "/admin/*" } }
-          ]
-        },
-        "eagerness": "moderate"
-      }
-    ]
-  }
-  </script>
+    <script data-cfasync="false" type="module" src="assets/js/ai-widget.js?v=4.6" data-site-id="fuegolingua" data-title="Asystent Fuego Lingua" data-nosnippet></script>
+    <!-- [REF-02] Speculation Rules API (Web Platform Baseline): natychmiastowa nawigacja 0 ms bez SPA przy najechaniu kursorem -->
+    <script type="speculationrules">
+    {
+      "prerender": [
+        {
+          "where": {
+            "and": [
+              { "href_matches": "/*" },
+              { "not": { "href_matches": "/api/*" } },
+              { "not": { "href_matches": "/assets/php/*" } },
+              { "not": { "href_matches": "/admin/*" } },
+              { "not": { "href_matches": "/*logout*" } }
+            ]
+          },
+          "eagerness": "moderate"
+        }
+      ]
+    }
+    </script>
 </body>
 
 </html>

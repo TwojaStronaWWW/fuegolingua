@@ -235,4 +235,72 @@ describe('Higiena repozytorium i bezpieczeństwo danych (ISO 27001)', () => {
     assert.match(content, /SFTP-Deploy-Action/i, 'Brak etapu deploy SFTP');
     assert.match(content, /needs:\s*\[test,\s*audit\]/i, 'Etap deploy musi zależeć od [test, audit]');
   });
+
+  it('utwardzenie bezpieczeństwa Threat Protection (Penalty Box 15 min, WAF L7, Zero-PII, Capo.js, llms.txt, .npmrc i LF w skryptach)', () => {
+    // 1. .npmrc z ignore-scripts=true
+    const npmrcPath = path.join(ROOT_DIR, '.npmrc');
+    assert.ok(fs.existsSync(npmrcPath), 'Brak pliku .npmrc');
+    assert.match(fs.readFileSync(npmrcPath, 'utf-8'), /ignore-scripts\s*=\s*true/i);
+
+    // 2. api/rate-limit.php: Zero-PII, Penalty Box 15 min, wyrejestrowanie phar/expect
+    const rateLimitCode = fs.readFileSync(path.join(ROOT_DIR, 'api', 'rate-limit.php'), 'utf-8');
+    assert.match(rateLimitCode, /function\s+ban_client_ip/i, 'Brak funkcji ban_client_ip w api/rate-limit.php');
+    assert.match(rateLimitCode, /blocked_until/i, 'Brak obsługi blocked_until w Penalty Box');
+    assert.match(rateLimitCode, /stream_wrapper_unregister/i, 'Brak wyrejestrowania niebezpiecznych wrapperów w api/rate-limit.php');
+    assert.match(rateLimitCode, /LOCK_EX\s*\|\s*LOCK_NB/i, 'Brak nieblokującej blokady flock(LOCK_EX | LOCK_NB) przy GC');
+
+    // 3. api/contact.php: limit 64 KB (HTTP 413), WAF L7, brak \s w filtrze telefonu, RFC 2047 Subject, osTicket CURLPROTO_HTTPS
+    const contactCode = fs.readFileSync(path.join(ROOT_DIR, 'api', 'contact.php'), 'utf-8');
+    assert.match(contactCode, /65536/, 'Brak limitu 65536 bajtów w api/contact.php');
+    assert.match(contactCode, /contains_waf_attack_payload/i, 'Brak filtra WAF L7 w api/contact.php');
+    assert.doesNotMatch(contactCode, /\[\^0-9\+\\s/, 'Filtr numeru telefonu nie może dopuszczać \\s (ryzyko CRLF)');
+    assert.match(contactCode, /=\?UTF-8\?B\?/i, 'Brak kodowania RFC 2047 dla tematu wiadomości e-mail');
+    assert.match(contactCode, /https:\/\/hd\.twojastronawww\.pl\/ticket_hook\.php/, 'Brak kanonicznego adresu osTicket');
+    assert.match(contactCode, /CURLPROTO_HTTPS/, 'Brak wymuszenia CURLPROTO_HTTPS w cURL');
+
+    // 4. api/admin.php: Sec-Fetch-Site, CSRF i X-Robots-Tag
+    const adminCode = fs.readFileSync(path.join(ROOT_DIR, 'api', 'admin.php'), 'utf-8');
+    assert.match(adminCode, /Sec-Fetch-Site/i);
+    assert.match(adminCode, /X-Robots-Tag:\s*noindex,\s*nofollow/i);
+    assert.doesNotMatch(adminCode, /\?logout=1/i, 'Wylogowanie nie może odbywać się przez niezabezpieczone żądanie GET');
+
+    // 5. llms.txt zgodny ze stanem faktycznym (100% online, grupy 3-6 osób, #contact)
+    const llmsTxt = fs.readFileSync(path.join(ROOT_DIR, 'llms.txt'), 'utf-8');
+    assert.match(llmsTxt, /100%\s*online/i, 'llms.txt musi komunikować zajęcia w 100% online');
+    assert.match(llmsTxt, /3[–-]6\s*osób/i, 'llms.txt musi podawać kameralne grupy 3-6 osób');
+    assert.match(llmsTxt, /#contact/, 'llms.txt musi wskazywać kotwicę #contact');
+    assert.doesNotMatch(llmsTxt, /stacjonarnie/i, 'llms.txt nie może zawierać halucynacji o zajęciach stacjonarnych');
+    assert.doesNotMatch(llmsTxt, /3[–-]5\s*os/i, 'llms.txt nie może podawać błędnego rozmiaru grup 3-5 osób');
+
+    // 6. Kolejność <head> wg Capo.js ([REF-02]): preconnect przed stylesheet przed meta description / JSON-LD
+    for (const pageName of ['index.html', 'cennik.html']) {
+      const html = fs.readFileSync(path.join(ROOT_DIR, pageName), 'utf-8');
+      const idxPreconnect = html.indexOf('rel="preconnect"');
+      const idxStylesheet = html.indexOf('assets/css/style.css');
+      const idxMetaDesc = html.indexOf('name="description"');
+      const idxJsonLd = html.indexOf('application/ld+json');
+      assert.ok(idxPreconnect > 0 && idxPreconnect < idxStylesheet, `Capo.js: preconnect musi być przed arkuszami CSS w ${pageName}`);
+      assert.ok(idxStylesheet < idxMetaDesc && idxStylesheet < idxJsonLd, `Capo.js: arkusze CSS muszą być przed meta SEO i JSON-LD w ${pageName}`);
+      assert.match(html, /type="speculationrules"/i, `Brak Speculation Rules API w ${pageName}`);
+    }
+
+    // 7. Skrypty .sh oraz .githooks/* muszą mieć końce linii LF (\n) bez CRLF (\r\n)
+    const lfFiles = [
+      path.join(ROOT_DIR, '.githooks', 'pre-commit'),
+      path.join(ROOT_DIR, '.githooks', 'commit-msg'),
+      path.join(ROOT_DIR, 'scripts', 'preview-tunnel.sh'),
+    ];
+    for (const filePath of lfFiles) {
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        assert.equal(raw.includes('\r\n'), false, `Plik powłoki musi mieć końce linii LF (\\n): ${path.relative(ROOT_DIR, filePath)}`);
+      }
+    }
+
+    // 8. AI Security Review Gate posiada guard author_association i model gemini-3.5-flash
+    const aiSecWf = fs.readFileSync(path.join(ROOT_DIR, '.github', 'workflows', 'ai-security-review.yml'), 'utf-8');
+    assert.match(aiSecWf, /author_association/);
+    assert.match(aiSecWf, /gemini-3\.5-flash/);
+    assert.doesNotMatch(aiSecWf, /cache:\s*['"]?npm['"]?/i);
+  });
 });

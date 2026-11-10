@@ -84,7 +84,7 @@ foreach ($mediaDirs as $label => $dirPath) {
 
         if ($image) {
             imagewebp($image, $destPath, 85);
-            imagedestroy($image);
+            unset($image);
             $newSize = filesize($destPath);
             $totalWebpSize += $newSize;
             $processedFiles[] = ['name' => $destFileName, 'orig' => $fileSize, 'new' => $newSize, 'path' => $destPath, 'mime' => 'image/webp'];

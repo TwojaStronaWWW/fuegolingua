@@ -33,9 +33,7 @@ class MediaService
 
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = $finfo ? (string)finfo_file($finfo, $tmpFilePath) : '';
-        if ($finfo) {
-            finfo_close($finfo);
-        }
+        unset($finfo);
 
         $allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         $allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
@@ -58,6 +56,10 @@ class MediaService
         $payloadData = '';
 
         if ($isImage && function_exists('imagewebp')) {
+            $imgInfo = @getimagesize($tmpFilePath);
+            if ($imgInfo === false || ($imgInfo[0] ?? 0) > 8192 || ($imgInfo[1] ?? 0) > 8192 || (($imgInfo[0] ?? 0) * ($imgInfo[1] ?? 0)) > 25000000) {
+                return ['status' => 'error', 'message' => 'Wymiary obrazu przekraczają bezpieczny limit pamięci (maks. 8192x8192 px / 25 MP).'];
+            }
             $sourceImage = null;
             switch ($mimeType) {
                 case 'image/jpeg':
@@ -91,14 +93,14 @@ class MediaService
                     imagealphablending($resized, false);
                     imagesavealpha($resized, true);
                     imagecopyresampled($resized, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                    imagedestroy($sourceImage);
+                    unset($sourceImage);
                     $sourceImage = $resized;
                 }
 
                 ob_start();
                 imagewebp($sourceImage, null, 82);
                 $payloadData = (string)ob_get_clean();
-                imagedestroy($sourceImage);
+                unset($sourceImage);
             }
         }
 
