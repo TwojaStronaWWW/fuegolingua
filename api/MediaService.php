@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace TwojaStronaWWW\Api;
 
 require_once __DIR__ . '/R2Client.php';
+require_once __DIR__ . '/leads-store.php';
 
 /**
  * Serwis optymalizacji multimediów (ścisła walidacja MIME, konwersja GD do WebP i wysyłka do Cloudflare R2).
@@ -15,8 +16,18 @@ class MediaService
 
     public function __construct(?R2Client $r2Client = null, string $cdnBaseUrl = '')
     {
+        if ($r2Client === null) {
+            $acc = \get_env_secret('R2_ACCOUNT_ID');
+            $key = \get_env_secret('R2_ACCESS_KEY_ID');
+            $sec = \get_env_secret('R2_SECRET_ACCESS_KEY');
+            $bkt = \get_env_secret('R2_BUCKET_NAME', 'twojastronawww-media');
+            if ($acc !== '' && $key !== '' && $sec !== '' && $bkt !== '') {
+                $r2Client = new R2Client($acc, $key, $sec, $bkt, 'auto');
+            }
+        }
         $this->r2Client = $r2Client;
-        $this->cdnBaseUrl = rtrim($cdnBaseUrl !== '' ? $cdnBaseUrl : (string)(getenv('CDN_BASE_URL') ?: 'https://media.twojadomena.pl'), '/');
+        $defaultCdn = \get_env_secret('R2_PUBLIC_URL', \get_env_secret('CDN_BASE_URL', 'https://media.twojastronawww.pl'));
+        $this->cdnBaseUrl = rtrim($cdnBaseUrl !== '' ? $cdnBaseUrl : $defaultCdn, '/');
     }
 
     /**
@@ -56,9 +67,14 @@ class MediaService
         $payloadData = '';
 
         if ($isImage && function_exists('imagewebp')) {
-            $imgInfo = @getimagesize($tmpFilePath);
-            if ($imgInfo === false || ($imgInfo[0] ?? 0) > 8192 || ($imgInfo[1] ?? 0) > 8192 || (($imgInfo[0] ?? 0) * ($imgInfo[1] ?? 0)) > 25000000) {
-                return ['status' => 'error', 'message' => 'Wymiary obrazu przekraczają bezpieczny limit pamięci (maks. 8192x8192 px / 25 MP).'];
+            $imgDimensions = @getimagesize($tmpFilePath);
+            if (
+                $imgDimensions === false ||
+                ($imgDimensions[0] ?? 0) > 8192 ||
+                ($imgDimensions[1] ?? 0) > 8192 ||
+                (($imgDimensions[0] ?? 0) * ($imgDimensions[1] ?? 0)) > 25000000
+            ) {
+                throw new RuntimeException('Wymiary obrazu przekraczają bezpieczny limit (maks. 8192x8192 px / 25 MP).');
             }
             $sourceImage = null;
             switch ($mimeType) {

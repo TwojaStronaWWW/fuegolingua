@@ -18,7 +18,7 @@ $rootDir = dirname(__DIR__);
 $outputDir = $rootDir . '/dist/media_r2';
 
 if (!is_dir($outputDir)) {
-    mkdir($outputDir, 0777, true);
+    mkdir($outputDir, 0755, true);
 }
 
 echo "========================================================\n";

@@ -32,6 +32,7 @@ header('X-Frame-Options: DENY');
 header('X-Robots-Tag: noindex, nofollow');
 header('Referrer-Policy: same-origin');
 header('Cache-Control: no-store, no-cache, must-revalidate');
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
 
 require_once __DIR__ . '/rate-limit.php';
 require_once __DIR__ . '/leads-store.php';
@@ -41,8 +42,14 @@ $SESSION_TTL = 1800;
 $clientIp = resolve_trusted_client_ip();
 $maskedIp = mask_ip($clientIp);
 
-// [REF-05] Ochrona OWASP Fetch Metadata (Sec-Fetch-Site) dla wszystkich żądań mutujących POST
+// [REF-05] Ochrona OWASP Fetch Metadata (Sec-Fetch-Site) oraz limit rozmiaru żądania (CONTENT_LENGTH <= 65536) dla POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int)$_SERVER['CONTENT_LENGTH'] : 0;
+    if ($contentLength > 65536) {
+        @session_write_close();
+        http_response_code(413);
+        exit('413 Payload Too Large.');
+    }
     if (isset($_SERVER['HTTP_SEC_FETCH_SITE']) && strtolower(trim((string)$_SERVER['HTTP_SEC_FETCH_SITE'])) === 'cross-site') {
         @session_write_close();
         http_response_code(403);

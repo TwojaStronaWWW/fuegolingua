@@ -12,6 +12,11 @@ foreach (['phar', 'ftp', 'ftps', 'expect'] as $dangerousWrapper) {
         @stream_wrapper_unregister($dangerousWrapper);
     }
 }
+$__rawQs = (string)($_SERVER['QUERY_STRING'] ?? '');
+if ($__rawQs !== '' && preg_match('/(^|&)(%2d|%ad|-)(d|n|s|w)\b|allow_url_include|auto_prepend_file|auto_append_file|php:\/\/|phar:\/\//i', $__rawQs)) {
+    http_response_code(403);
+    exit('Forbidden');
+}
 
 if (!function_exists('resolve_trusted_client_ip')) {
     /**
@@ -46,6 +51,45 @@ if (!function_exists('mask_ip')) {
             return implode(':', array_slice($parts, 0, 3)) . '::0';
         }
         return '0.0.0.0';
+    }
+}
+
+if (!function_exists('is_safe_outbound_https_url')) {
+    /**
+     * [REF-05] SSRF Guard (OWASP ASVS): weryfikuje, że docelowy URL używa wyłącznie HTTPS
+     * i nie wskazuje na adresy prywatne, loopback ani metadane chmurowe (169.254.169.254).
+     */
+    function is_safe_outbound_https_url(string $url): bool {
+        $trimmed = trim($url);
+        if ($trimmed === '' || preg_match('/[\r\n\0]/', $trimmed) === 1) {
+            return false;
+        }
+        $parts = @parse_url($trimmed);
+        if (!is_array($parts)) {
+            return false;
+        }
+        $scheme = strtolower((string)($parts['scheme'] ?? ''));
+        $host = strtolower(trim((string)($parts['host'] ?? ''), '[]'));
+        if ($scheme !== 'https' || $host === '' || isset($parts['user']) || isset($parts['pass'])) {
+            return false;
+        }
+        if (
+            $host === 'localhost' ||
+            $host === '169.254.169.254' ||
+            $host === 'metadata.google.internal' ||
+            str_ends_with($host, '.local') ||
+            str_ends_with($host, '.internal')
+        ) {
+            return false;
+        }
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return filter_var(
+                $host,
+                FILTER_VALIDATE_IP,
+                FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+            ) !== false;
+        }
+        return true;
     }
 }
 

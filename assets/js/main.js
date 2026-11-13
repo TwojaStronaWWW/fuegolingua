@@ -239,6 +239,17 @@ export function initLightbox(doc = document) {
     } else if (e.key === 'ArrowLeft') {
       if (typeof e.preventDefault === 'function') e.preventDefault();
       showPrev();
+    } else if (e.key === 'Tab') {
+      const focusables = [closeBtn, prevBtn, nextBtn].filter(Boolean);
+      if (focusables.length > 0) {
+        const activeEl = doc.activeElement;
+        const idx = focusables.indexOf(activeEl);
+        const nextIdx = e.shiftKey
+          ? (idx <= 0 ? focusables.length - 1 : idx - 1)
+          : (idx === -1 || idx >= focusables.length - 1 ? 0 : idx + 1);
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        focusables[nextIdx]?.focus?.();
+      }
     }
   };
 
@@ -264,6 +275,20 @@ export function initServiceWorker(doc = document, win = typeof window !== 'undef
   return null;
 }
 
+export function bindWebMcpContactSupport(doc = document) {
+  const contactForm = doc.getElementById('contactForm');
+  if (!contactForm) return null;
+
+  const handler = (e) => {
+    if (e?.agentInvoked && typeof e?.respondWith === 'function' && !e.__webMcpHandled) {
+      e.__webMcpHandled = true;
+    }
+  };
+
+  contactForm.addEventListener('submit', handler);
+  return { contactForm, handler };
+}
+
 // Inicjalizacja w przeglądarce
 if (typeof document !== 'undefined') {
   const runInit = () => {
@@ -273,6 +298,7 @@ if (typeof document !== 'undefined') {
     initLightbox(document);
     initScrollAnimations(document);
     initServiceWorker(document);
+    bindWebMcpContactSupport(document);
   };
 
   if (document.readyState === 'loading') {

@@ -81,7 +81,7 @@ FileETag None
 </IfModule>
 
 # Blokada bezpośredniego dostępu HTTP do kopii zapasowych, baz danych, kluczy, metadanych Node i plików środowiskowych
-<FilesMatch "(^#.*#|\.(bak|conf|dist|fla|in[ci]|log|orig|psd|sh|sql|sqlite|sqlite3|db|pem|key|kdbx|sw[op]|tmp)|~|\.env.*|package(-lock)?\.json|\.npmrc|\.gitleaks\.toml)$">
+<FilesMatch "(^#.*#|\.(bak|conf|csv|dist|fla|in[ci]|lock|log|orig|psd|sh|sql|sqlite|sqlite3|db|pem|key|kdbx|sw[op]|tmp)|~|\.env.*|(?:package(?:-lock)?|composer|\.lighthouserc)\.json|\.npmrc|\.gitleaks\.toml)$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

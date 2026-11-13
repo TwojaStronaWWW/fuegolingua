@@ -146,7 +146,7 @@ Dla każdego modułu JavaScript w `assets/js/`:
 ---
 
 ### Krok 5: Aktualizacja i publikacja SEO (`robots.txt`, `sitemap.xml`)
-1. **W `robots.txt`:** Ustaw właściwy adres domeny produkcyjnej dla mapy witryny oraz upewnij się, że katalogi prywatne (`/api/`) są zablokowane dla botów.
+1. **W `robots.txt`:** Ustaw właściwy adres domeny produkcyjnej dla mapy witryny oraz upewnij się, że katalogi prywatne (`/api/`, `/api/bot-trap.php`) są zablokowane dla botów, a `/llms.txt` (`[REF-07]` GEO & WebMCP `toolname="send_contact_inquiry"`) jest dozwolony (`Allow: /llms.txt`).
 2. **W `sitemap.xml`:** Podmień adresy URL `<loc>` na domenę docelową i zaktualizuj datę `<lastmod>`.
 3. **W `site.webmanifest`:** Ustaw nazwę serwisu, kolory motywu i ikony PWA.
 

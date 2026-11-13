@@ -242,27 +242,49 @@ describe('Higiena repozytorium i bezpieczeństwo danych (ISO 27001)', () => {
     assert.ok(fs.existsSync(npmrcPath), 'Brak pliku .npmrc');
     assert.match(fs.readFileSync(npmrcPath, 'utf-8'), /ignore-scripts\s*=\s*true/i);
 
-    // 2. api/rate-limit.php: Zero-PII, Penalty Box 15 min, wyrejestrowanie phar/expect
+    // 2. api/rate-limit.php: Zero-PII, Penalty Box 15 min, wyrejestrowanie phar/expect, SSRF Guard (169.254.169.254)
     const rateLimitCode = fs.readFileSync(path.join(ROOT_DIR, 'api', 'rate-limit.php'), 'utf-8');
     assert.match(rateLimitCode, /function\s+ban_client_ip/i, 'Brak funkcji ban_client_ip w api/rate-limit.php');
     assert.match(rateLimitCode, /blocked_until/i, 'Brak obsługi blocked_until w Penalty Box');
     assert.match(rateLimitCode, /stream_wrapper_unregister/i, 'Brak wyrejestrowania niebezpiecznych wrapperów w api/rate-limit.php');
     assert.match(rateLimitCode, /LOCK_EX\s*\|\s*LOCK_NB/i, 'Brak nieblokującej blokady flock(LOCK_EX | LOCK_NB) przy GC');
+    assert.match(rateLimitCode, /function\s+is_safe_outbound_https_url/i, 'Brak SSRF Guard is_safe_outbound_https_url w api/rate-limit.php');
+    assert.match(rateLimitCode, /169\.254\.169\.254/, 'Brak blokady 169.254.169.254 w SSRF Guard');
 
-    // 3. api/contact.php: limit 64 KB (HTTP 413), WAF L7, brak \s w filtrze telefonu, RFC 2047 Subject, osTicket CURLPROTO_HTTPS
+    // 3. api/contact.php: limit 64 KB (HTTP 413), WAF L7, SSRF Guard, brak \s w filtrze telefonu, RFC 2047 Subject, osTicket CURLPROTO_HTTPS
     const contactCode = fs.readFileSync(path.join(ROOT_DIR, 'api', 'contact.php'), 'utf-8');
     assert.match(contactCode, /65536/, 'Brak limitu 65536 bajtów w api/contact.php');
     assert.match(contactCode, /contains_waf_attack_payload/i, 'Brak filtra WAF L7 w api/contact.php');
+    assert.match(contactCode, /is_safe_outbound_https_url/i, 'Brak wywołania SSRF Guard w api/contact.php');
+    assert.match(contactCode, /169\\\.254\\\.169\\\.254/, 'Brak sygnatury 169.254.169.254 w WAF L7 api/contact.php');
     assert.doesNotMatch(contactCode, /\[\^0-9\+\\s/, 'Filtr numeru telefonu nie może dopuszczać \\s (ryzyko CRLF)');
     assert.match(contactCode, /=\?UTF-8\?B\?/i, 'Brak kodowania RFC 2047 dla tematu wiadomości e-mail');
     assert.match(contactCode, /https:\/\/hd\.twojastronawww\.pl\/ticket_hook\.php/, 'Brak kanonicznego adresu osTicket');
     assert.match(contactCode, /CURLPROTO_HTTPS/, 'Brak wymuszenia CURLPROTO_HTTPS w cURL');
 
-    // 4. api/admin.php: Sec-Fetch-Site, CSRF i X-Robots-Tag
+    // 4. api/admin.php i api/lead_recovery.php: Sec-Fetch-Site, CONTENT_LENGTH <= 65536, CSRF i X-Robots-Tag
     const adminCode = fs.readFileSync(path.join(ROOT_DIR, 'api', 'admin.php'), 'utf-8');
     assert.match(adminCode, /Sec-Fetch-Site/i);
+    assert.match(adminCode, /65536/);
     assert.match(adminCode, /X-Robots-Tag:\s*noindex,\s*nofollow/i);
     assert.doesNotMatch(adminCode, /\?logout=1/i, 'Wylogowanie nie może odbywać się przez niezabezpieczone żądanie GET');
+
+    const leadRecCode = fs.readFileSync(path.join(ROOT_DIR, 'api', 'lead_recovery.php'), 'utf-8');
+    assert.match(leadRecCode, /Sec-Fetch-Site/i);
+    assert.match(leadRecCode, /65536/);
+
+    // 4b. [REF-01] .htaccess oraz [REF-06] .well-known/security.txt
+    const rootHtaccess = fs.readFileSync(path.join(ROOT_DIR, '.htaccess'), 'utf-8');
+    assert.match(rootHtaccess, /sqlite/, 'Brak ochrony .sqlite w .htaccess');
+    assert.match(rootHtaccess, /db/, 'Brak ochrony .db w .htaccess');
+    assert.match(rootHtaccess, /csv/, 'Brak ochrony .csv w .htaccess');
+    assert.match(rootHtaccess, /\.json/, 'Brak ochrony wrażliwych plików .json w .htaccess');
+    assert.match(rootHtaccess, /\.env/, 'Brak ochrony .env w .htaccess');
+
+    const secTxtPath = path.join(ROOT_DIR, '.well-known', 'security.txt');
+    assert.ok(fs.existsSync(secTxtPath), 'Brak pliku .well-known/security.txt');
+    const secTxt = fs.readFileSync(secTxtPath, 'utf-8');
+    assert.match(secTxt, /Expires:\s*202[7-9]-/i, 'Data Expires w .well-known/security.txt musi wskazywać na rok 2027+');
 
     // 5. llms.txt zgodny ze stanem faktycznym (100% online, grupy 3-6 osób, #contact)
     const llmsTxt = fs.readFileSync(path.join(ROOT_DIR, 'llms.txt'), 'utf-8');

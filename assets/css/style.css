@@ -338,7 +338,6 @@ li {
 	.hero-rationale {
 		font-size: 1.1rem;
 		color: var(--text-dark);
-		opacity: 0.85;
 		margin-bottom: 2.5rem;
 		max-width: 600px; /* Keep the line length readable */
 		line-height: 1.6;
@@ -1153,6 +1152,10 @@ select {
 	font-weight: 600;
 	margin-top: 1rem;
 	margin-bottom: 1rem;
+}
+
+.form-feedback.is-visible {
+	display: block;
 }
 
 .form-feedback-error,

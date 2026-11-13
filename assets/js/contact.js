@@ -92,8 +92,14 @@ export function initContactForm(
     if (isSubmitting) return;
     isSubmitting = true;
 
-    if (errorDiv && errorDiv.style) errorDiv.style.display = 'none';
-    if (successMsg && successMsg.style) successMsg.style.display = 'none';
+    if (errorDiv) {
+      errorDiv.classList?.remove('is-visible');
+      if (errorDiv.style) errorDiv.style.display = 'none';
+    }
+    if (successMsg) {
+      successMsg.classList?.remove('is-visible');
+      if (successMsg.style) successMsg.style.display = 'none';
+    }
 
     const formData = typeof FormData === 'function' ? new FormData(contactForm) : null;
     const submitBtn = contactForm.querySelector?.('button[type="submit"]');
@@ -108,6 +114,7 @@ export function initContactForm(
         formStatus.innerHTML = '<p class="success">¡Gracias! Twoja wiadomość dotarła do nas.</p>';
       }
       if (successMsg) {
+        successMsg.classList?.add('is-visible');
         if (successMsg.style) successMsg.style.display = 'block';
         successMsg.textContent = '¡Gracias! Twoja wiadomość dotarła do nas.';
       }
@@ -117,7 +124,8 @@ export function initContactForm(
     }
 
     const rawElapsed = (getMonotonicMs() - formInitTime) / 1000;
-    const submissionSeconds = Math.max(0, isStrictFiniteNumber(rawElapsed) && rawElapsed >= 0 ? rawElapsed : 0).toFixed(2);
+    const minAgentElapsed = e?.agentInvoked ? 3 : 0;
+    const submissionSeconds = Math.max(minAgentElapsed, isStrictFiniteNumber(rawElapsed) && rawElapsed >= 0 ? rawElapsed : 0).toFixed(2);
     if (formData && typeof formData.append === 'function') {
       formData.append('js_check', '1');
       formData.append('submission_seconds', submissionSeconds);
@@ -146,59 +154,79 @@ export function initContactForm(
       formStatus.innerHTML = '';
     }
 
-    try {
-      const fetchOptions = formData && inputs.length === 0
-        ? { method: 'POST', body: formData }
-        : {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          };
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 10000) : null;
+    timeoutId?.unref?.();
 
-      const response = await fetch('api/contact.php', fetchOptions);
-      const data = await response.json();
-      const isOk = (response.ok ?? true) && Boolean(data.success || data.status === 'success');
+    const submitTask = (async () => {
+      try {
+        const fetchOptions = formData && inputs.length === 0
+          ? { method: 'POST', body: formData, ...(controller ? { signal: controller.signal } : {}) }
+          : {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              ...(controller ? { signal: controller.signal } : {})
+            };
 
-      if (isOk) {
-        const msg = data.message || '¡Gracias! Twoja wiadomość została wysłana pomyślnie.';
-        if (formStatus) {
-          formStatus.innerHTML = '<p class="success">' + escapeStatusHtml(msg) + '</p>';
+        const response = await fetch('api/contact.php', fetchOptions);
+        const data = await response.json();
+        const isOk = (response.ok ?? true) && Boolean(data.success || data.status === 'success');
+
+        if (isOk) {
+          const msg = data.message || '¡Gracias! Twoja wiadomość została wysłana pomyślnie.';
+          if (formStatus) {
+            formStatus.innerHTML = '<p class="success">' + escapeStatusHtml(msg) + '</p>';
+          }
+          if (successMsg) {
+            successMsg.classList?.add('is-visible');
+            if (successMsg.style) successMsg.style.display = 'block';
+            successMsg.textContent = msg;
+          }
+          contactForm.reset?.();
+          try { storage?.removeItem(DRAFT_KEY); } catch (_) {}
+          return { ok: true, message: msg };
+        } else {
+          const errMsg = data.message || 'Wystąpił błąd podczas wysyłania.';
+          if (formStatus) {
+            formStatus.innerHTML = '<p class="error">' + escapeStatusHtml(errMsg) + '</p>';
+          }
+          if (errorDiv) {
+            errorDiv.classList?.add('is-visible');
+            if (errorDiv.style) errorDiv.style.display = 'block';
+            errorDiv.textContent = errMsg;
+          }
+          return { ok: false, error: errMsg };
         }
-        if (successMsg) {
-          if (successMsg.style) successMsg.style.display = 'block';
-          successMsg.textContent = msg;
+      } catch (error) {
+        let errorMsg = 'Wystąpił błąd podczas wysyłania wiadomości.';
+        if (error?.message) {
+          errorMsg += ' (Szczegóły: ' + error.message + ')';
         }
-        contactForm.reset?.();
-        try { storage?.removeItem(DRAFT_KEY); } catch (_) {}
-      } else {
-        const errMsg = data.message || 'Wystąpił błąd podczas wysyłania.';
         if (formStatus) {
-          formStatus.innerHTML = '<p class="error">' + escapeStatusHtml(errMsg) + '</p>';
+          formStatus.innerHTML = '<p class="error">' + escapeStatusHtml(errorMsg) + '<br>Upewnij się, że strona otwarta jest na serwerze z obsługą PHP.</p>';
         }
         if (errorDiv) {
+          errorDiv.classList?.add('is-visible');
           if (errorDiv.style) errorDiv.style.display = 'block';
-          errorDiv.textContent = errMsg;
+          errorDiv.textContent = 'Błąd połączenia. Spróbuj ponownie.';
+        }
+        return { ok: false, error: errorMsg };
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+        isSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = originalBtnText;
         }
       }
-    } catch (error) {
-      let errorMsg = 'Wystąpił błąd podczas wysyłania wiadomości.';
-      if (error?.message) {
-        errorMsg += ' (Szczegóły: ' + error.message + ')';
-      }
-      if (formStatus) {
-        formStatus.innerHTML = '<p class="error">' + escapeStatusHtml(errorMsg) + '<br>Upewnij się, że strona otwarta jest na serwerze z obsługą PHP.</p>';
-      }
-      if (errorDiv) {
-        if (errorDiv.style) errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Błąd połączenia. Spróbuj ponownie.';
-      }
-    } finally {
-      isSubmitting = false;
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerText = originalBtnText;
-      }
+    })();
+
+    if (e?.agentInvoked && typeof e?.respondWith === 'function') {
+      e.respondWith(submitTask);
     }
+
+    return submitTask;
   };
 
   contactForm.addEventListener('submit', submitHandler);
@@ -214,13 +242,18 @@ export function initLeadRecovery(win = globalThis.window, _doc = document) {
   async function triggerLeadRecovery() {
     if (win.sessionStorage.getItem(SESSION_KEY)) return;
 
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 6000) : null;
+    timeoutId?.unref?.();
+
     try {
       const response = await fetch('api/lead_recovery.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: 'action=recover_lead'
+        body: 'action=recover_lead',
+        ...(controller ? { signal: controller.signal } : {})
       });
       const data = await response.json();
       if (data?.success) {
@@ -228,6 +261,8 @@ export function initLeadRecovery(win = globalThis.window, _doc = document) {
       }
     } catch (_) {
       // Cicha obsługa błędu RODO Lead Recovery
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
     }
   }
 

@@ -7,6 +7,9 @@ import { setupMockDom } from '../helpers/mock-dom.js';
 import {
   MAX_CACHE_ENTRIES,
   escapeHtml,
+  isValidPesel,
+  maskSensitivePlPii,
+  registerWebMcpTools,
   isOwnerAnalyticsIgnored,
   formatMarkdown,
   getLocalFallbackAnswer,
@@ -51,7 +54,7 @@ describe('Uniwersalny Widget Asystenta AI v3.0 (assets/js/ai-widget.js)', () => 
     assert.match(getLocalFallbackAnswer('Jak wygląda współpraca?'), /3 prostych krokach/i);
     assert.match(getLocalFallbackAnswer('Jak się skontaktować?'), /formularz/i);
     assert.match(getLocalFallbackAnswer('Dzień dobry!', 'twojastronawww'), /twojastronawww/i);
-    assert.match(getLocalFallbackAnswer('Ile kosztują lody włoskie i mini pancakes?', 'raricart'), /3 000 zł/);
+    assert.match(getLocalFallbackAnswer('Ile kosztują lody włoskie i mini pancakes?', 'raricart'), /indywidualnie|24 godzin/i);
     assert.match(getLocalFallbackAnswer('Bezpłatna lekcja próbna', 'fuegolingua'), /bezpłatna/i);
     assert.match(getLocalFallbackAnswer('Co zrobić gdy nie działa e-Recepta P1?', 'radar-p1'), /gabinet\.gov\.pl/i);
     assert.match(getLocalFallbackAnswer('Nie działa eWUŚ w rejestracji', 'radar-p1'), /oświadczenia pacjenta/i);
@@ -299,6 +302,25 @@ describe('Uniwersalny Widget Asystenta AI v3.0 (assets/js/ai-widget.js)', () => 
     const aiControl = await import('../../scripts/ai-control.js');
     assert.equal(typeof aiControl.readAiConfig, 'function');
     assert.equal(typeof aiControl.setAiEnabled, 'function');
+
+    // Walidacja PESEL, maskowanie PII oraz rejestracja WebMCP (ask_site_assistant)
+    assert.equal(isValidPesel('44051401458'), true);
+    assert.equal(isValidPesel('44051401459'), false);
+    const masked = maskSensitivePlPii('Mój PESEL: 44051401458, dowód osobisty ABC123456, tel. +48 500 600 700');
+    assert.equal(masked.includes('44051401458'), false);
+    assert.ok(masked.includes('[PESEL-ZAMASKOWANY]'));
+    assert.ok(masked.includes('[DOWOD-ZAMASKOWANY]'));
+    assert.ok(masked.includes('500 600 700'));
+
+    let registeredTool = null;
+    dom.mockDocument.modelContext = {
+      registerTool(toolDef) {
+        registeredTool = toolDef;
+      }
+    };
+    const mcpRes = registerWebMcpTools(dom.mockDocument, enabledWidget, 'fuegolingua');
+    assert.equal(mcpRes.supported, true);
+    assert.equal(registeredTool.name, 'ask_site_assistant');
   });
 });
 

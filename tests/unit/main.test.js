@@ -237,6 +237,15 @@ describe('Nawigacja i interakcje UI (assets/js/main.js)', () => {
     dom.mockDocument.dispatchEvent({ type: 'keydown', key: 'ArrowLeft', preventDefault: () => {} });
     assert.equal(imgEl.getAttribute('src'), 'https://media.fuegolingua.pl/plakat1.webp');
 
+    // Focus trap (Tab / Shift+Tab wewnątrz modala)
+    dom.mockDocument.activeElement = closeBtn;
+    dom.mockDocument.dispatchEvent({ type: 'keydown', key: 'Tab', shiftKey: false, preventDefault: () => {} });
+    assert.equal(prevBtn._focused, true);
+
+    dom.mockDocument.activeElement = closeBtn;
+    dom.mockDocument.dispatchEvent({ type: 'keydown', key: 'Tab', shiftKey: true, preventDefault: () => {} });
+    assert.equal(nextBtn._focused, true);
+
     // Klawisz Escape -> zamknięcie i powrót do item1
     dom.mockDocument.dispatchEvent({ type: 'keydown', key: 'Escape', preventDefault: () => {} });
     assert.equal(modal.classList.contains('is-open'), false);

@@ -97,7 +97,7 @@ function contains_waf_attack_payload(array $payload): bool {
     if (strpos($serialized, "\0") !== false) {
         return true;
     }
-    $wafPattern = '/(<\s*script\b|javascript\s*:|vbscript\s*:|on(?:error|load|mouseover|focus)\s*=|union\s+(?:all\s+)?select\b|\.\.\/|\.\.\\\\|(?:phar|expect|php|file|dict|gopher):\/\/|\/etc\/passwd)/i';
+    $wafPattern = '/(<\s*script\b|<\s*iframe\b[^>]*\bsrcdoc\s*=|mathlive#virtual-keyboard-message|javascript\s*:|vbscript\s*:|on(?:error|load|mouseover|focus)\s*=|union\s+(?:all\s+)?select\b|\.\.\/|\.\.\\\\|(?:phar|expect|php|file|dict|gopher):\/\/|169\.254\.169\.254|metadata\.google\.internal|\/etc\/passwd)/i';
     return preg_match($wafPattern, $serialized) === 1;
 }
 
@@ -257,7 +257,7 @@ save_lead([
 $osTicketApiKey = get_env_secret('OSTICKET_API_KEY');
 $defaultOsTicketUrl = 'https://hd.twojastronawww.pl/ticket_hook.php';
 $configuredOsTicketUrl = trim(get_env_secret('OSTICKET_API_URL', $defaultOsTicketUrl));
-if ($configuredOsTicketUrl === '' || stripos($configuredOsTicketUrl, 'https://') !== 0) {
+if (!is_safe_outbound_https_url($configuredOsTicketUrl)) {
     $configuredOsTicketUrl = $defaultOsTicketUrl;
 }
 $ticketCreated = false;
@@ -326,7 +326,7 @@ if ($ntfyTopic !== '' && function_exists('curl_init')) {
     $sanitizeNtfyActionItem = static fn(string $v): string => trim((string)preg_replace('/[\r\n\0;,]+/', ' ', $v));
 
     $ntfyBaseUrl = rtrim(trim(get_env_secret('NTFY_BASE_URL', 'https://ntfy.sh')), '/');
-    if ($ntfyBaseUrl === '' || stripos($ntfyBaseUrl, 'https://') !== 0) {
+    if (!is_safe_outbound_https_url($ntfyBaseUrl)) {
         $ntfyBaseUrl = 'https://ntfy.sh';
     }
     $ntfyToken = $sanitizeNtfyHeader(get_env_secret('NTFY_TOKEN'));

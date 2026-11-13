@@ -588,7 +588,8 @@
 .lightbox-close:focus-visible {
     background: var(--fuego-red);
     transform: scale(1.1);
-    outline: none;
+    outline: 3px solid var(--fuego-gold);
+    outline-offset: 2px;
 }
 
 .lightbox-nav {
@@ -616,7 +617,8 @@
 .lightbox-nav:focus-visible {
     background: var(--fuego-orange);
     transform: translateY(-50%) scale(1.1);
-    outline: none;
+    outline: 3px solid var(--fuego-gold);
+    outline-offset: 2px;
 }
 
 body.lightbox-open {

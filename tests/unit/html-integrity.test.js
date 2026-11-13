@@ -136,4 +136,17 @@ describe('Integralność semantyczna i standardy HTML5 (FuegoLingua.pl)', () => 
     }
     assert.match(indexContent, /<img[^>]*kobieta1b\.webp[^>]*loading=["']lazy["']/i, 'Obraz centralny orbity 3D (kobieta1b.webp) musi posiadać loading="lazy"');
   });
+
+  test('Standard [DR-06] oraz [REF-08]: brak jednoczesnej numeracji 01..05 i ikon SVG w tej samej karcie, obecny @graph i data-nosnippet', () => {
+    for (const [name, content] of pages) {
+      assert.match(content, /"@graph"\s*:/, `Brak grafu JSON-LD @graph w ${name}`);
+      assert.match(content, /ai-widget\.js[^>]*data-nosnippet/i, `Brak atrybutu data-nosnippet na widgecie AI w ${name}`);
+      const cardBlocks = content.match(/<div\s+class=["'](?:offer-card-orbit|target-card|process-step|pricing-card)[^"']*["'][^>]*>[\s\S]*?<\/div>\s*<\/div>/gi) || [];
+      for (const block of cardBlocks) {
+        const hasNumberBadge = /<(?:span|div)[^>]*>\s*0[1-5]\s*<\/(?:span|div)>/i.test(block);
+        const hasSvgIcon = /<svg[\s>]/i.test(block);
+        assert.equal(hasNumberBadge && hasSvgIcon, false, `[DR-06] Wykryto jednoczesną numerację 01..05 i ikonę SVG w tej samej karcie w ${name}`);
+      }
+    }
+  });
 });

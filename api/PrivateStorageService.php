@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace TwojaStronaWWW\Api;
 
 require_once __DIR__ . '/R2Client.php';
+require_once __DIR__ . '/leads-store.php';
 
 /**
  * Serwis do zarządzania prywatnym, autoryzowanym magazynem w Cloudflare R2 (Zero Public Access).
@@ -20,10 +21,10 @@ class PrivateStorageService
         string $secretKey = '',
         string $bucketName = ''
     ) {
-        $acc = $accountId !== '' ? $accountId : (string)(getenv('R2_ACCOUNT_ID') ?: ($_ENV['R2_ACCOUNT_ID'] ?? ''));
-        $key = $accessKey !== '' ? $accessKey : (string)(getenv('R2_ACCESS_KEY_ID') ?: ($_ENV['R2_ACCESS_KEY_ID'] ?? ''));
-        $sec = $secretKey !== '' ? $secretKey : (string)(getenv('R2_SECRET_ACCESS_KEY') ?: ($_ENV['R2_SECRET_ACCESS_KEY'] ?? ''));
-        $bkt = $bucketName !== '' ? $bucketName : (string)(getenv('R2_PRIVATE_BUCKET_NAME') ?: ($_ENV['R2_PRIVATE_BUCKET_NAME'] ?? ''));
+        $acc = $accountId !== '' ? $accountId : \get_env_secret('R2_ACCOUNT_ID');
+        $key = $accessKey !== '' ? $accessKey : \get_env_secret('R2_ACCESS_KEY_ID');
+        $sec = $secretKey !== '' ? $secretKey : \get_env_secret('R2_SECRET_ACCESS_KEY');
+        $bkt = $bucketName !== '' ? $bucketName : \get_env_secret('R2_PRIVATE_BUCKET_NAME');
 
         $this->bucketName = trim($bkt);
 
